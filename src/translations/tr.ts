@@ -44,6 +44,7 @@ export const tr: Translations = {
   frameHandy: 'Telefon', frameHandyDunkel: 'Telefon Koyu', frameKlemmbrett: 'Pano', frameTablet: 'Tablet',
   footerDesc: '\u00dccretsiz QR Kod Olu\u015fturucu - T\u00fcm veriler taray\u0131c\u0131n\u0131zda kal\u0131r.',
   impressum: 'Yasal Bilgi', datenschutz: 'Gizlilik', qrCodesErstellt: 'QR kod olu\u015fturuldu',
+  kostenlosErstellteQR: 'ücretsiz QR kod oluşturuldu',
   kaffeeSpendieren: 'Bir kahve \u0131smarla',
   urlLink: 'URL / Link', linkEingeben: 'Link girin', wifiNetzwerk: 'WiFi A\u011f\u0131',
   wifiPasswort: '\u015eifre', wifiVerschluesselung: '\u015eifreleme', wifiKeineVerschl: 'Yok',

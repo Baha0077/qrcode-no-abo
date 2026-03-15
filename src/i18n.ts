@@ -149,6 +149,7 @@ export interface Translations {
   impressum: string;
   datenschutz: string;
   qrCodesErstellt: string;
+  kostenlosErstellteQR: string;
   kaffeeSpendieren: string;
 
   // Other tabs form labels

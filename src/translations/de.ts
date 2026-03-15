@@ -119,6 +119,7 @@ export const de: Translations = {
   impressum: 'Impressum',
   datenschutz: 'Datenschutz',
   qrCodesErstellt: 'QR-Codes erstellt',
+  kostenlosErstellteQR: 'kostenlose QR-Codes erstellt',
   kaffeeSpendieren: 'Kaffee spendieren',
 
   // Other tabs form labels

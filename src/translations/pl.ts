@@ -44,6 +44,7 @@ export const pl: Translations = {
   frameHandy: 'Telefon', frameHandyDunkel: 'Telefon Ciemny', frameKlemmbrett: 'Schowek', frameTablet: 'Tablet',
   footerDesc: 'Darmowy generator kod\u00f3w QR - Wszystkie dane pozostaj\u0105 w Twojej przegl\u0105darce.',
   impressum: 'Nota prawna', datenschutz: 'Prywatno\u015b\u0107', qrCodesErstellt: 'Kod\u00f3w QR utworzonych',
+  kostenlosErstellteQR: 'darmowych kodów QR utworzono',
   kaffeeSpendieren: 'Postaw kaw\u0119',
   urlLink: 'URL / Link', linkEingeben: 'Wprowad\u017a link', wifiNetzwerk: 'Sie\u0107 WiFi',
   wifiPasswort: 'Has\u0142o', wifiVerschluesselung: 'Szyfrowanie', wifiKeineVerschl: 'Brak',

@@ -45,6 +45,7 @@ export const pt: Translations = {
   frameHandy: 'Celular', frameHandyDunkel: 'Celular Escuro', frameKlemmbrett: 'Prancheta', frameTablet: 'Tablet',
   footerDesc: 'Gerador de QR gratuito - Todos os dados ficam no seu navegador.',
   impressum: 'Aviso legal', datenschutz: 'Privacidade', qrCodesErstellt: 'QR codes criados',
+  kostenlosErstellteQR: 'códigos QR gratuitos criados',
   kaffeeSpendieren: 'Me pague um caf\u00e9',
   urlLink: 'URL / Link', linkEingeben: 'Inserir link', wifiNetzwerk: 'Rede WiFi',
   wifiPasswort: 'Senha', wifiVerschluesselung: 'Criptografia', wifiKeineVerschl: 'Nenhuma',

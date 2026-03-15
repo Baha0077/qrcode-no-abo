@@ -28,6 +28,7 @@ export const cs: Translations = {
   footerDesc: 'Bezplatn\u00fd gener\u00e1tor QR k\u00f3d\u016f - data z\u016fst\u00e1vaj\u00ed v prohl\u00ed\u017ee\u010di.',
   impressum: 'Pr\u00e1vn\u00ed informace', datenschutz: 'Ochrana osobn\u00edch \u00fadaj\u016f',
   qrCodesErstellt: 'QR k\u00f3d\u016f vytvo\u0159eno', kaffeeSpendieren: 'Koupit k\u00e1vu',
+  kostenlosErstellteQR: 'bezplatných QR kódů vytvořeno',
   wifiPasswort: 'Heslo', wifiVerschluesselung: '\u0160ifrov\u00e1n\u00ed', wifiKeineVerschl: '\u017d\u00e1dn\u00e9',
   datenEingeben: 'Zadejte data pro generov\u00e1n\u00ed QR k\u00f3du',
   weitereTypen: 'Dal\u0161\u00ed typy QR k\u00f3d\u016f', zurueckUebersicht: 'Zp\u011bt na p\u0159ehled',

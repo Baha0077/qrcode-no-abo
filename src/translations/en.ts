@@ -108,6 +108,7 @@ export const en: Translations = {
   impressum: 'Legal Notice',
   datenschutz: 'Privacy Policy',
   qrCodesErstellt: 'QR codes created',
+  kostenlosErstellteQR: 'free QR codes created',
   kaffeeSpendieren: 'Buy me a coffee',
 
   urlLink: 'URL / Link',

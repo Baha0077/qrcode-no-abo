@@ -108,6 +108,7 @@ export const fr: Translations = {
   impressum: 'Mentions l\u00e9gales',
   datenschutz: 'Confidentialit\u00e9',
   qrCodesErstellt: 'QR codes cr\u00e9\u00e9s',
+  kostenlosErstellteQR: 'QR codes gratuits créés',
   kaffeeSpendieren: 'Offrir un caf\u00e9',
 
   urlLink: 'URL / Lien',

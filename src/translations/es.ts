@@ -108,6 +108,7 @@ export const es: Translations = {
   impressum: 'Aviso legal',
   datenschutz: 'Privacidad',
   qrCodesErstellt: 'C\u00f3digos QR creados',
+  kostenlosErstellteQR: 'códigos QR gratuitos creados',
   kaffeeSpendieren: 'Invitar a un caf\u00e9',
 
   urlLink: 'URL / Enlace',

@@ -44,6 +44,7 @@ export const nl: Translations = {
   frameHandy: 'Telefoon', frameHandyDunkel: 'Telefoon Donker', frameKlemmbrett: 'Klembord', frameTablet: 'Tablet',
   footerDesc: 'Gratis QR-code Generator - Alle gegevens blijven in je browser.',
   impressum: 'Juridische informatie', datenschutz: 'Privacy', qrCodesErstellt: 'QR-codes gemaakt',
+  kostenlosErstellteQR: 'gratis QR-codes gemaakt',
   kaffeeSpendieren: 'Trakteer op koffie',
   urlLink: 'URL / Link', linkEingeben: 'Link invoeren', wifiNetzwerk: 'WiFi-netwerk',
   wifiPasswort: 'Wachtwoord', wifiVerschluesselung: 'Versleuteling', wifiKeineVerschl: 'Geen',

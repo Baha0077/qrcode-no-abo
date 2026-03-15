@@ -98,6 +98,7 @@ export const it: Translations = {
   impressum: 'Note legali',
   datenschutz: 'Privacy',
   qrCodesErstellt: 'QR code creati',
+  kostenlosErstellteQR: 'codici QR gratuiti creati',
   kaffeeSpendieren: 'Offrimi un caff\u00e8',
   urlLink: 'URL / Link',
   linkEingeben: 'Inserisci link',

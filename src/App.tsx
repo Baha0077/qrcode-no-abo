@@ -2510,9 +2510,17 @@ export default function App() {
               {t.subtitle}
             </p>
             {!showGenerator && (
-              <p className="text-sm sm:text-base text-white/75 max-w-xl mb-3">
-                {t.headerDesc}
-              </p>
+              <>
+                <p className="text-sm sm:text-base text-white/75 max-w-xl mb-3">
+                  {t.headerDesc}
+                </p>
+                {globalCounter > 0 && (
+                  <p className="text-white/90 text-sm font-medium">
+                    <span className="font-mono text-xl sm:text-2xl font-bold text-white">{globalCounter.toLocaleString('de-DE')}</span>
+                    {' '}{t.kostenlosErstellteQR}
+                  </p>
+                )}
+              </>
             )}
             {showGenerator && (
               <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mt-2">
