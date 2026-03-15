@@ -1217,6 +1217,74 @@ function toWin1252Bytes(str: string): Uint8Array {
 
 // ─── Language Selector Component ─────────────────────────────────────────────
 
+function FeatureCarousel({ cards, onSelect }: { cards: { id: string; title: string; icon: React.ReactNode; description: string }[]; onSelect: (id: string) => void }) {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % cards.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [cards.length]);
+
+  const card = cards[current];
+
+  return (
+    <div className="bg-gray-900 py-4">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center gap-4">
+          {/* Left arrow */}
+          <button
+            onClick={() => setCurrent(prev => (prev - 1 + cards.length) % cards.length)}
+            className="text-gray-500 hover:text-white transition-colors cursor-pointer flex-shrink-0 p-1"
+          >
+            <ChevronDown className="w-6 h-6 rotate-90" />
+          </button>
+
+          {/* Card */}
+          <button
+            onClick={() => onSelect(card.id)}
+            className="flex-1 flex items-center gap-5 bg-gray-800/60 hover:bg-gray-700/60 rounded-xl p-4 sm:p-5 transition-all cursor-pointer group"
+          >
+            <div className="flex-shrink-0 bg-white rounded-xl p-2 shadow-md">
+              <QRCodeSVG value="https://qrcode-no-abo.de" size={64} fgColor="#dc2626" level="L" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-center gap-2 mb-1">
+                {card.icon}
+                <h3 className="text-white font-bold text-lg group-hover:text-red-300 transition-colors">{card.title}</h3>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed">{card.description}</p>
+            </div>
+            <span className="hidden sm:inline-flex items-center gap-1 text-red-400 text-sm font-medium flex-shrink-0 group-hover:text-red-300">
+              Erstellen →
+            </span>
+          </button>
+
+          {/* Right arrow */}
+          <button
+            onClick={() => setCurrent(prev => (prev + 1) % cards.length)}
+            className="text-gray-500 hover:text-white transition-colors cursor-pointer flex-shrink-0 p-1"
+          >
+            <ChevronDown className="w-6 h-6 -rotate-90" />
+          </button>
+        </div>
+
+        {/* Dots */}
+        <div className="flex justify-center gap-1.5 mt-3">
+          {cards.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`w-2 h-2 rounded-full transition-all cursor-pointer ${i === current ? 'bg-red-500 w-6' : 'bg-gray-600 hover:bg-gray-500'}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LanguageSelector({ lang, setLang }: { lang: LangCode; setLang: (l: LangCode) => void }) {
   const [open, setOpen] = useState(false);
   const current = LANGUAGES.find(l => l.code === lang)!;
@@ -2552,29 +2620,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* QR-Code Slider Banner */}
+      {/* Feature Carousel Banner */}
       {!showGenerator && (
-        <div className="bg-gray-900 overflow-hidden py-4">
-          <div className="flex animate-scroll gap-8" style={{ width: 'max-content' }}>
-            {[...Array(3)].map((_, setIdx) => (
-              <div key={setIdx} className="flex gap-8 items-center">
-                {FEATURE_CARDS.map(card => (
-                  <button
-                    key={`${setIdx}-${card.id}`}
-                    onClick={() => openTab(card.id)}
-                    className="flex items-center gap-3 flex-shrink-0 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl px-4 py-2.5 transition-colors cursor-pointer group"
-                  >
-                    <QRCodeSVG value="https://qrcode-no-abo.de" size={32} fgColor="#f87171" bgColor="transparent" level="L" />
-                    <div className="flex items-center gap-1.5">
-                      {card.icon}
-                      <span className="text-gray-300 text-sm font-medium group-hover:text-white whitespace-nowrap">{card.title}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+        <FeatureCarousel cards={FEATURE_CARDS} onSelect={openTab} />
       )}
 
       {showGenerator ? (
