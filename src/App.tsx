@@ -2752,11 +2752,13 @@ export default function App() {
             </div>
             <div className="prose prose-sm text-gray-700 space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Angaben gemäß § 5 DDG</h3>
-              <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen</p>
+              <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />Deutschland</p>
               <h3 className="text-lg font-semibold text-gray-900">Kontakt:</h3>
-              <p>E-Mail: info@qrcode-no-abo.de</p>
+              <p>E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 1659626</p>
               <h3 className="text-lg font-semibold text-gray-900">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:</h3>
               <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen</p>
+              <h3 className="text-lg font-semibold text-gray-900">EU-Streitschlichtung</h3>
+              <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">https://ec.europa.eu/consumers/odr/</a>. Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
               <h3 className="text-lg font-semibold text-gray-900">Haftungsausschluss:</h3>
               <h4 className="text-base font-semibold text-gray-800">Haftung für Inhalte</h4>
               <p>Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.</p>
@@ -2781,18 +2783,28 @@ export default function App() {
             </div>
             <div className="prose prose-sm text-gray-700 space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">1. Datenschutz auf einen Blick</h3>
-              <p>Diese Website verarbeitet KEINE personenbezogenen Daten. Alle Eingaben (Kontaktdaten, URLs) werden ausschließlich in Ihrem Browser verarbeitet und niemals an einen Server übertragen.</p>
-              <h3 className="text-lg font-semibold text-gray-900">2. Datenverarbeitung auf dieser Website</h3>
-              <h4 className="text-base font-semibold text-gray-800">Hosting</h4>
-              <p>Diese Website wird über Cloudflare Pages gehostet. Cloudflare kann technisch bedingt Zugriffsdaten (IP-Adresse, Zeitpunkt des Zugriffs, Browser-Typ) in Server-Logfiles speichern. Details: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">https://www.cloudflare.com/privacypolicy/</a></p>
-              <h4 className="text-base font-semibold text-gray-800">Cloudflare Web Analytics</h4>
-              <p>Wir verwenden Cloudflare Web Analytics zur anonymen Besucherstatistik. Dieses Tool verwendet KEINE Cookies und speichert KEINE personenbezogenen Daten. Es werden lediglich aggregierte, anonyme Nutzungsstatistiken erfasst.</p>
-              <h4 className="text-base font-semibold text-gray-800">Lokale Datenspeicherung</h4>
-              <p>Ihre eingegebenen Daten werden ausschließlich lokal in Ihrem Browser verarbeitet. Es findet keine Übertragung an unsere oder fremde Server statt. Beim Schließen des Browsers werden alle eingegebenen Daten gelöscht, sofern Sie diese nicht selbst als JSON-Datei exportiert haben.</p>
-              <h3 className="text-lg font-semibold text-gray-900">3. Ihre Rechte</h3>
-              <p>Da wir keine personenbezogenen Daten erheben oder speichern, entfallen die üblichen Betroffenenrechte (Auskunft, Löschung, etc.) in Bezug auf diese Website.</p>
-              <h3 className="text-lg font-semibold text-gray-900">4. Verantwortlicher</h3>
-              <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />E-Mail: info@qrcode-no-abo.de</p>
+              <p>Diese Website verarbeitet KEINE personenbezogenen Daten. Alle Eingaben (Kontaktdaten, URLs) werden ausschließlich in Ihrem Browser verarbeitet und niemals an einen Server übertragen. Es werden KEINE Cookies gesetzt.</p>
+              <h3 className="text-lg font-semibold text-gray-900">2. Hosting</h3>
+              <p>Diese Website wird über Cloudflare Workers gehostet. Cloudflare kann technisch bedingt Zugriffsdaten (IP-Adresse, Zeitpunkt des Zugriffs, Browser-Typ) in Server-Logfiles speichern. Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem zuverlässigen Hosting). Details: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">Cloudflare Datenschutzerklärung</a></p>
+              <h3 className="text-lg font-semibold text-gray-900">3. Cloudflare Web Analytics</h3>
+              <p>Wir verwenden Cloudflare Web Analytics zur anonymen Besucherstatistik. Dieses Tool verwendet <strong>KEINE Cookies</strong> und speichert <strong>KEINE personenbezogenen Daten</strong>. Es werden lediglich aggregierte, anonyme Nutzungsstatistiken erfasst (z.B. Seitenaufrufe, Herkunftsland). Eine Zuordnung zu einzelnen Personen ist nicht möglich.</p>
+              <h3 className="text-lg font-semibold text-gray-900">4. QR-Code Zähler</h3>
+              <p>Beim Herunterladen eines QR-Codes wird ein anonymer Zähler auf unserem Server um 1 erhöht. Dabei werden <strong>keine personenbezogenen Daten</strong> übertragen - es wird lediglich die Gesamtanzahl der erstellten QR-Codes gespeichert. Weder IP-Adressen noch andere identifizierende Informationen werden erfasst.</p>
+              <h3 className="text-lg font-semibold text-gray-900">5. Lokale Datenspeicherung (localStorage)</h3>
+              <p>Ihr Browser speichert lokal folgende Einstellungen:</p>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>Gewählte Sprache (damit Sie beim nächsten Besuch nicht erneut wählen müssen)</li>
+                <li>Passwort-Status der Testphase (temporär)</li>
+              </ul>
+              <p>Diese Daten werden <strong>nicht</strong> an unsere Server übertragen und können jederzeit über die Browser-Einstellungen gelöscht werden. Es handelt sich dabei nicht um Cookies.</p>
+              <h3 className="text-lg font-semibold text-gray-900">6. Ihre eingegebenen Daten</h3>
+              <p>Alle Daten, die Sie in die Formulare eingeben (Namen, Telefonnummern, E-Mail-Adressen, URLs etc.), werden <strong>ausschließlich lokal in Ihrem Browser</strong> verarbeitet. Es findet <strong>keine Übertragung</strong> an unsere oder fremde Server statt. Beim Schließen des Browsers werden alle eingegebenen Daten gelöscht, sofern Sie diese nicht selbst als JSON- oder VCF-Datei exportiert haben.</p>
+              <h3 className="text-lg font-semibold text-gray-900">7. Externe Dienste</h3>
+              <p>Für die Anzeige der Länderflaggen im Sprach-Selector werden Bilder von <strong>flagcdn.com</strong> geladen. Dabei kann der Anbieter technisch bedingt Ihre IP-Adresse erfahren.</p>
+              <h3 className="text-lg font-semibold text-gray-900">8. Ihre Rechte</h3>
+              <p>Da wir keine personenbezogenen Daten erheben oder speichern, entfallen die üblichen Betroffenenrechte (Auskunft, Löschung, Berichtigung etc.) in Bezug auf diese Website. Sie können sich dennoch jederzeit an uns wenden.</p>
+              <h3 className="text-lg font-semibold text-gray-900">9. Verantwortlicher</h3>
+              <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 1659626</p>
             </div>
           </div>
         </div>
