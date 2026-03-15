@@ -36,13 +36,6 @@ const EMPTY_FORM: BusinessCardData = {
   adresse: '', plz: '', ort: '', linkedin: '', notizen: ''
 };
 
-const DEMO_FORM: BusinessCardData = {
-  vorname: 'Max', nachname: 'Mustermann', position: 'Geschäftsführer',
-  firma: 'Mustermann GmbH', email: 'max@mustermann.de',
-  telefon: '+49 211 1234567', mobil: '+49 170 9876543',
-  website: 'https://www.mustermann.de', adresse: 'Musterstraße 42',
-  plz: '40878', ort: 'Ratingen', linkedin: '', notizen: ''
-};
 
 // ─── Brand Icons ──────────────────────────────────────────────────────────
 
