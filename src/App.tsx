@@ -1227,20 +1227,24 @@ function LanguageSelector({ lang, setLang }: { lang: LangCode; setLang: (l: Lang
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm transition-colors cursor-pointer"
       >
-        <span className="text-lg">{current.flag}</span>
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full overflow-hidden text-base leading-none"
+          style={{ backgroundImage: `url(https://flagcdn.com/w40/${current.code === 'en' ? 'gb' : current.code}.png)`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        />
         <span className="text-white font-medium hidden sm:inline">{current.name}</span>
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50 max-h-80 overflow-y-auto w-48">
+          <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50 max-h-80 overflow-y-auto w-52">
             {LANGUAGES.map(l => (
               <button
                 key={l.code}
                 onClick={() => { setLang(l.code); setOpen(false); }}
-                className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer ${lang === l.code ? 'bg-red-50 text-red-600 font-medium' : 'text-gray-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 cursor-pointer ${lang === l.code ? 'bg-red-50 text-red-600 font-medium' : 'text-gray-700'}`}
               >
-                <span className="text-lg">{l.flag}</span>
+                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full overflow-hidden flex-shrink-0 shadow-sm border border-gray-200"
+                  style={{ backgroundImage: `url(https://flagcdn.com/w40/${l.code === 'en' ? 'gb' : l.code}.png)`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                />
                 {l.name}
               </button>
             ))}
