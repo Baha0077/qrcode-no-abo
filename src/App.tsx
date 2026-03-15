@@ -2845,8 +2845,8 @@ export default function App() {
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold">€</span>
                 </div>
-                <a
-                  onClick={(e) => {
+                <button
+                  onClick={() => {
                     const input = document.getElementById('donate-amount') as HTMLInputElement;
                     const val = input?.value;
                     if (val && parseFloat(val) > 0) {
@@ -2854,13 +2854,11 @@ export default function App() {
                     } else {
                       window.open('https://paypal.me/Erguellue', '_blank');
                     }
-                    e.preventDefault();
                   }}
-                  href="#"
                   className="flex items-center justify-center px-5 py-2.5 bg-amber-500 hover:bg-amber-600 rounded-xl text-white font-bold text-sm transition-all cursor-pointer whitespace-nowrap"
                 >
                   Spenden →
-                </a>
+                </button>
               </div>
               <p className="text-xs text-gray-400 text-center mt-4">Weiterleitung zu PayPal. Keine Registrierung nötig.</p>
             </div>
