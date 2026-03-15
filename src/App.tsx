@@ -1294,6 +1294,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [showImpressum, setShowImpressum] = useState(false);
   const [showDatenschutz, setShowDatenschutz] = useState(false);
+  const [showDonate, setShowDonate] = useState(false);
 
   const openTab = (tab: TabType) => {
     setActiveTab(tab);
@@ -2727,15 +2728,13 @@ export default function App() {
                 <span className="text-gray-600 ml-2">({sessionCounter} in dieser Session)</span>
               )}
             </p>
-            <a
-              href="https://paypal.me/Erguellue"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-medium px-4 py-2 rounded-full transition-colors text-xs"
+            <button
+              onClick={() => setShowDonate(true)}
+              className="inline-flex items-center gap-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-medium px-4 py-2 rounded-full transition-colors text-xs cursor-pointer"
             >
               <Coffee className="w-3.5 h-3.5" />
               {t.kaffeeSpendieren} ☕
-            </a>
+            </button>
           </div>
         </div>
       </footer>
@@ -2805,6 +2804,52 @@ export default function App() {
               <p>Da wir keine personenbezogenen Daten erheben oder speichern, entfallen die üblichen Betroffenenrechte (Auskunft, Löschung, Berichtigung etc.) in Bezug auf diese Website. Sie können sich dennoch jederzeit an uns wenden.</p>
               <h3 className="text-lg font-semibold text-gray-900">9. Verantwortlicher</h3>
               <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 1659626</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Donate Modal */}
+      {showDonate && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDonate(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-center text-white">
+              <div className="text-4xl mb-2">☕</div>
+              <h2 className="text-xl font-bold">Danke für deine Unterstützung!</h2>
+              <p className="text-sm text-white/80 mt-1">Dieses Projekt ist 100% kostenlos und werbefrei.</p>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-600 text-center mb-4">Wähle einen Betrag:</p>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {[1, 2, 3, 5, 10].map(amount => (
+                  <a
+                    key={amount}
+                    href={`https://paypal.me/Erguellue/${amount}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center py-3 bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 hover:border-amber-400 rounded-xl text-amber-900 font-bold text-lg transition-all cursor-pointer"
+                  >
+                    {amount}€
+                  </a>
+                ))}
+                <a
+                  href="https://paypal.me/Erguellue"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center py-3 bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 hover:border-amber-400 rounded-xl text-amber-900 font-bold text-sm transition-all cursor-pointer"
+                >
+                  Frei
+                </a>
+              </div>
+              <p className="text-xs text-gray-400 text-center mt-4">Weiterleitung zu PayPal. Keine Registrierung nötig.</p>
+            </div>
+            <div className="px-6 pb-4">
+              <button
+                onClick={() => setShowDonate(false)}
+                className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+              >
+                Schließen
+              </button>
             </div>
           </div>
         </div>
