@@ -1053,7 +1053,7 @@ async function handleDownloadEPS(
         hexData += pixels[i + 1].toString(16).padStart(2, '0');
         hexData += pixels[i + 2].toString(16).padStart(2, '0');
       }
-      const logoSizePt = sizePt * 0.22;
+      const logoSizePt = sizePt * 0.22; // EPS uses fixed 22%
       const logoX = (sizePt - logoSizePt) / 2;
       const logoY = (sizePt - logoSizePt) / 2;
       const padding = logoSizePt * 0.05;
@@ -1322,6 +1322,7 @@ export default function App() {
   const [qrColor, setQrColor] = useState('#000000');
   const [customLogo, setCustomLogo] = useState<string | null>(null);
   const [useLogo, setUseLogo] = useState(false);
+  const [logoSize, setLogoSize] = useState(22); // % of QR code size
   const qrRef = useRef<HTMLDivElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -1691,8 +1692,8 @@ export default function App() {
                         src: logoSrc,
                         x: undefined,
                         y: undefined,
-                        height: previewPx * 0.22,
-                        width: previewPx * 0.22,
+                        height: previewPx * (logoSize / 100),
+                        width: previewPx * (logoSize / 100),
                         excavate: true,
                       }
                     : undefined
@@ -1793,6 +1794,27 @@ export default function App() {
                 >
                   {t.keinLogo}
                 </button>
+                {useLogo && customLogo && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Logo-Größe: {logoSize}%</label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="35"
+                      step="1"
+                      value={logoSize}
+                      onChange={(e) => setLogoSize(parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                      <span>10%</span>
+                      <span>35%</span>
+                    </div>
+                    {logoSize > 25 && (
+                      <p className="text-xs text-amber-600 mt-1">⚠ Große Logos können die Scanbarkeit beeinträchtigen</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
