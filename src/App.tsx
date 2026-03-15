@@ -1217,26 +1217,57 @@ function toWin1252Bytes(str: string): Uint8Array {
 
 // ─── Language Selector Component ─────────────────────────────────────────────
 
+const CAROUSEL_BENEFITS: Record<string, string[]> = {
+  'visitenkarte': ['Kontakt direkt ins Adressbuch importieren', 'Kein Abtippen von Telefonnummern mehr', 'Perfekt für Messen und Networking'],
+  'link': ['Jede URL als QR-Code', 'Ideal für Flyer, Plakate und Verpackungen', 'Kunden gelangen sofort auf Ihre Website'],
+  'google-review': ['Kunden bewerten Sie direkt auf Google', 'Mehr Sterne = mehr Neukunden', 'Perfekt für Restaurants und Geschäfte'],
+  'wifi': ['Gäste verbinden sich ohne Passwort-Eingabe', 'Kein umständliches Diktieren mehr', 'Ideal für Hotels, Cafés und Büros'],
+  'email': ['Vorausgefüllte E-Mail öffnet sich sofort', 'Empfänger, Betreff und Text vordefiniert', 'Perfekt für Support und Kontaktanfragen'],
+  'sms': ['Vorgefertigte SMS mit einem Scan', 'Ideal für Bestellungen und Rückrufe', 'Funktioniert auf jedem Handy'],
+  'telefon': ['Ein Scan startet den Anruf', 'Kein Abtippen der Nummer nötig', 'Ideal für Service und Notfallkontakte'],
+  'whatsapp': ['Chatten ohne Kontakt speichern zu müssen', 'Vorausgefüllte Nachricht möglich', 'Perfekt für Kundenservice und Bestellungen'],
+  'instagram': ['Direkt zum Instagram-Profil', 'Mehr Follower durch Offline-Werbung', 'Ideal für Influencer und Marken'],
+  'tiktok': ['Direkt zum TikTok-Profil', 'Follower von Offline zu Online bringen', 'Perfekt für Creator'],
+  'facebook': ['Direkt zur Facebook-Seite', 'Mehr Likes und Follower', 'Ideal für lokale Unternehmen'],
+  'youtube': ['Direkt zum YouTube-Kanal', 'Mehr Abonnenten gewinnen', 'Ideal für Content Creator'],
+  'linkedin': ['Professionelles Networking per Scan', 'Perfekt für Visitenkarten und Events', 'Direkt zum LinkedIn-Profil'],
+  'twitter': ['Direkt zum X/Twitter-Profil', 'Follower von Print zu Digital', 'Ideal für Marken und Personen'],
+};
+
 function FeatureCarousel({ cards, onSelect }: { cards: { id: TabType; title: string; icon: React.ReactNode; description: string }[]; onSelect: (id: TabType) => void }) {
   const [current, setCurrent] = useState(0);
+  const [fade, setFade] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrent(prev => (prev + 1) % cards.length);
-    }, 4000);
+      setFade(false);
+      setTimeout(() => {
+        setCurrent(prev => (prev + 1) % cards.length);
+        setFade(true);
+      }, 400);
+    }, 7000);
     return () => clearInterval(timer);
   }, [cards.length]);
 
+  const switchTo = (idx: number) => {
+    setFade(false);
+    setTimeout(() => {
+      setCurrent(idx);
+      setFade(true);
+    }, 200);
+  };
+
   const card = cards[current];
+  const benefits = CAROUSEL_BENEFITS[card.id] || [];
 
   return (
-    <div className="bg-gray-900 py-4">
+    <div className="bg-gray-900 py-5 sm:py-6">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-5">
           {/* Left arrow */}
           <button
-            onClick={() => setCurrent(prev => (prev - 1 + cards.length) % cards.length)}
-            className="text-gray-500 hover:text-white transition-colors cursor-pointer flex-shrink-0 p-1"
+            onClick={() => switchTo((current - 1 + cards.length) % cards.length)}
+            className="text-gray-500 hover:text-white transition-colors cursor-pointer flex-shrink-0 p-2 hover:bg-gray-800 rounded-full"
           >
             <ChevronDown className="w-6 h-6 rotate-90" />
           </button>
@@ -1244,39 +1275,48 @@ function FeatureCarousel({ cards, onSelect }: { cards: { id: TabType; title: str
           {/* Card */}
           <button
             onClick={() => onSelect(card.id)}
-            className="flex-1 flex items-center gap-5 bg-gray-800/60 hover:bg-gray-700/60 rounded-xl p-4 sm:p-5 transition-all cursor-pointer group"
+            className={`flex-1 flex items-start gap-5 sm:gap-6 bg-gray-800/60 hover:bg-gray-700/60 rounded-2xl p-5 sm:p-6 transition-all cursor-pointer group ${fade ? 'opacity-100' : 'opacity-0'}`}
+            style={{ transition: 'opacity 0.4s ease-in-out' }}
           >
-            <div className="flex-shrink-0 bg-white rounded-xl p-2 shadow-md">
-              <QRCodeSVG value="https://qrcode-no-abo.de" size={64} fgColor="#dc2626" level="L" />
+            <div className="flex-shrink-0 bg-white rounded-xl p-2.5 shadow-lg">
+              <QRCodeSVG value="https://qrcode-no-abo.de" size={72} fgColor="#dc2626" level="L" />
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-2">
                 {card.icon}
-                <h3 className="text-white font-bold text-lg group-hover:text-red-300 transition-colors">{card.title}</h3>
+                <h3 className="text-white font-bold text-lg sm:text-xl group-hover:text-red-300 transition-colors">{card.title}</h3>
               </div>
-              <p className="text-gray-400 text-sm leading-relaxed">{card.description}</p>
+              <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-3">{card.description}</p>
+              <ul className="space-y-1">
+                {benefits.map((b, i) => (
+                  <li key={i} className="flex items-center gap-2 text-gray-400 text-xs sm:text-sm">
+                    <span className="text-green-400 flex-shrink-0">✓</span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <span className="hidden sm:inline-flex items-center gap-1 text-red-400 text-sm font-medium flex-shrink-0 group-hover:text-red-300">
-              Erstellen →
+            <span className="hidden md:inline-flex items-center gap-1 text-red-400 text-sm font-semibold flex-shrink-0 group-hover:text-red-300 mt-2">
+              Jetzt erstellen →
             </span>
           </button>
 
           {/* Right arrow */}
           <button
-            onClick={() => setCurrent(prev => (prev + 1) % cards.length)}
-            className="text-gray-500 hover:text-white transition-colors cursor-pointer flex-shrink-0 p-1"
+            onClick={() => switchTo((current + 1) % cards.length)}
+            className="text-gray-500 hover:text-white transition-colors cursor-pointer flex-shrink-0 p-2 hover:bg-gray-800 rounded-full"
           >
             <ChevronDown className="w-6 h-6 -rotate-90" />
           </button>
         </div>
 
         {/* Dots */}
-        <div className="flex justify-center gap-1.5 mt-3">
+        <div className="flex justify-center gap-1.5 mt-4">
           {cards.map((_, i) => (
             <button
               key={i}
-              onClick={() => setCurrent(i)}
-              className={`w-2 h-2 rounded-full transition-all cursor-pointer ${i === current ? 'bg-red-500 w-6' : 'bg-gray-600 hover:bg-gray-500'}`}
+              onClick={() => switchTo(i)}
+              className={`h-2 rounded-full transition-all cursor-pointer ${i === current ? 'bg-red-500 w-8' : 'bg-gray-600 hover:bg-gray-500 w-2'}`}
             />
           ))}
         </div>
