@@ -2851,11 +2851,9 @@ export default function App() {
                     const val = input?.value;
                     if (val && parseFloat(val) > 0) {
                       window.open(`https://paypal.me/Erguellue/${val}`, '_blank');
-                    } else {
-                      window.open('https://paypal.me/Erguellue', '_blank');
                     }
                   }}
-                  className="flex items-center justify-center px-5 py-2.5 bg-amber-500 hover:bg-amber-600 rounded-xl text-white font-bold text-sm transition-all cursor-pointer whitespace-nowrap"
+                  className="flex items-center justify-center px-5 py-2.5 bg-amber-500 hover:bg-amber-600 rounded-xl text-white font-bold text-sm transition-all cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Spenden →
                 </button>
