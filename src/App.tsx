@@ -6,6 +6,8 @@ import {
   CheckCircle2, Zap, Lock, FileDown, FileUp, Wifi, MessageSquare,
   ChevronDown, ArrowLeft, Coffee, MessageCircle, Palette
 } from 'lucide-react';
+import { LANGUAGES, LangCode } from './i18n';
+import { translations } from './translations';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -111,19 +113,9 @@ const XIcon = ({ large }: { large?: boolean }) => {
   );
 };
 
-const FAQ_DATA = [
-  { question: 'Ist der QR-Code Generator wirklich kostenlos?', answer: 'Ja, 100% kostenlos. Kein Abo, keine versteckten Kosten, keine Registrierung erforderlich.' },
-  { question: 'Werden meine Daten gespeichert?', answer: 'Nein. Alle Daten werden ausschließlich in Ihrem Browser verarbeitet. Es werden keine Daten an einen Server übertragen.' },
-  { question: 'Laufen die QR-Codes ab?', answer: 'Nein. Die erstellten QR-Codes sind statisch und funktionieren dauerhaft - ohne Ablaufdatum.' },
-  { question: 'Welche Formate kann ich herunterladen?', answer: 'PNG, SVG, EPS und JPEG. Alle Formate sind druckfähig und kostenlos.' },
-  { question: 'Kann ich ein Logo in den QR-Code einbetten?', answer: 'Ja. Laden Sie Ihr eigenes Logo hoch - es wird automatisch in der Mitte des QR-Codes eingebettet.' },
-  { question: 'Sind die QR-Codes für kommerzielle Nutzung geeignet?', answer: 'Ja. Alle erstellten QR-Codes dürfen frei und ohne Einschränkungen verwendet werden, auch kommerziell.' },
-  { question: 'Was ist ein vCard QR-Code?', answer: 'Ein vCard QR-Code enthält Kontaktdaten (Name, Telefon, E-Mail, etc.). Beim Scannen können die Daten direkt ins Adressbuch importiert werden.' },
-  { question: 'Wie groß sollte ein QR-Code gedruckt werden?', answer: 'Mindestens 2 x 2 cm. Für bessere Scanbarkeit empfehlen wir 3-5 cm. Der Generator berechnet die optimale Auflösung automatisch.' },
-  { question: 'Wie erstelle ich einen QR-Code für Google Bewertungen?', answer: 'Suchen Sie Ihr Geschäft auf Google Maps, klicken Sie auf "Teilen" und kopieren Sie den Link. Fügen Sie diesen Link im Tab "Google Bewertung" ein. Der QR-Code führt Kunden direkt zur Bewertungsseite Ihres Unternehmens.' },
-];
+// FAQ_DATA is now generated from translations - see getFaqData() inside App component
 
-// ─── Structured Data (hardcoded, no user input - safe for innerHTML) ────────
+// ─── Structured Data (hardcoded in German for SEO) ────────
 
 const STRUCTURED_DATA_JSON = JSON.stringify({
   "@context": "https://schema.org",
@@ -140,29 +132,12 @@ const STRUCTURED_DATA_JSON = JSON.stringify({
         "price": "0",
         "priceCurrency": "EUR"
       }
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": FAQ_DATA.map(faq => ({
-        "@type": "Question",
-        "name": faq.question,
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": faq.answer
-        }
-      }))
     }
   ]
 });
 
 // ─── Frame Types ────────────────────────────────────────────────────────────
 
-interface FrameDefinition {
-  id: string;
-  name: string;
-  hasText: boolean;
-  preview: React.ReactNode;
-}
 
 function FramePreview({ type, color }: { type: string; color?: string }) {
   const c = color || '#dc2626';
@@ -245,15 +220,15 @@ function FramePreview({ type, color }: { type: string; color?: string }) {
   }
 }
 
-const FRAMES: FrameDefinition[] = [
-  { id: 'none', name: 'Ohne', hasText: false, preview: <FramePreview type="none" /> },
-  { id: 'simple', name: 'Einfach', hasText: true, preview: <FramePreview type="simple" /> },
-  { id: 'bold', name: 'Fett', hasText: true, preview: <FramePreview type="bold" /> },
-  { id: 'circle', name: 'Kreis', hasText: true, preview: <FramePreview type="circle" /> },
-  { id: 'phone', name: 'Handy', hasText: true, preview: <FramePreview type="phone" /> },
-  { id: 'phone-dark', name: 'Handy Dunkel', hasText: true, preview: <FramePreview type="phone-dark" /> },
-  { id: 'clipboard', name: 'Klemmbrett', hasText: true, preview: <FramePreview type="clipboard" /> },
-  { id: 'tablet', name: 'Tablet', hasText: false, preview: <FramePreview type="tablet" /> },
+const FRAME_DEFS = [
+  { id: 'none', nameKey: 'frameOhne' as const, hasText: false },
+  { id: 'simple', nameKey: 'frameEinfach' as const, hasText: true },
+  { id: 'bold', nameKey: 'frameFett' as const, hasText: true },
+  { id: 'circle', nameKey: 'frameKreis' as const, hasText: true },
+  { id: 'phone', nameKey: 'frameHandy' as const, hasText: true },
+  { id: 'phone-dark', nameKey: 'frameHandyDunkel' as const, hasText: true },
+  { id: 'clipboard', nameKey: 'frameKlemmbrett' as const, hasText: true },
+  { id: 'tablet', nameKey: 'frameTablet' as const, hasText: false },
 ];
 
 // ─── Frame Selector Component ───────────────────────────────────────────────
@@ -263,18 +238,20 @@ function FrameSelector({
   setSelectedFrame,
   frameText,
   setFrameText,
+  t,
 }: {
   selectedFrame: string;
   setSelectedFrame: (id: string) => void;
   frameText: string;
   setFrameText: (text: string) => void;
+  t: import('./i18n').Translations;
 }) {
-  const activeFrame = FRAMES.find(f => f.id === selectedFrame);
+  const activeFrame = FRAME_DEFS.find(f => f.id === selectedFrame);
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">QR-Code Rahmen</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">{t.qrRahmen}</label>
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-        {FRAMES.map(frame => (
+        {FRAME_DEFS.map(frame => (
           <button
             key={frame.id}
             onClick={() => setSelectedFrame(frame.id)}
@@ -285,15 +262,15 @@ function FrameSelector({
             }`}
           >
             <div className="w-full aspect-[3/4] flex items-center justify-center">
-              {frame.preview}
+              <FramePreview type={frame.id} />
             </div>
-            <p className="text-[10px] text-gray-500 text-center mt-1 truncate">{frame.name}</p>
+            <p className="text-[10px] text-gray-500 text-center mt-1 truncate">{t[frame.nameKey]}</p>
           </button>
         ))}
       </div>
       {selectedFrame !== 'none' && activeFrame?.hasText && (
         <div className="mt-3">
-          <label className="block text-xs font-medium text-gray-700 mb-1">Rahmen-Text</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">{t.rahmenText}</label>
           <input
             type="text"
             value={frameText}
@@ -650,7 +627,7 @@ function handleDownloadFrameSVG(
 
 // ─── Color Picker Modal ─────────────────────────────────────────────────────
 
-function ColorPickerModal({ color, onChange, onClose }: { color: string; onChange: (c: string) => void; onClose: () => void }) {
+function ColorPickerModal({ color, onChange, onClose, t }: { color: string; onChange: (c: string) => void; onClose: () => void; t: import('./i18n').Translations }) {
   const [tempColor, setTempColor] = useState(color);
   const [hue, setHue] = useState(0);
   const [saturation, setSaturation] = useState(100);
@@ -717,13 +694,13 @@ function ColorPickerModal({ color, onChange, onClose }: { color: string; onChang
 
   // Themed color palettes
   const PALETTES = [
-    { name: 'Klassisch', colors: ['#000000', '#333333', '#555555', '#777777', '#999999'] },
-    { name: 'Rot & Warm', colors: ['#dc2626', '#ef4444', '#f97316', '#ea580c', '#b91c1c', '#9a3412'] },
-    { name: 'Blau & Cool', colors: ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#0369a1', '#1e40af'] },
-    { name: 'Grün & Natur', colors: ['#16a34a', '#15803d', '#166534', '#4ade80', '#059669', '#047857'] },
-    { name: 'Lila & Kreativ', colors: ['#7c3aed', '#8b5cf6', '#a855f7', '#6d28d9', '#9333ea', '#c026d3'] },
-    { name: 'Dunkel & Elegant', colors: ['#0f172a', '#1e293b', '#1a1a2e', '#16213e', '#0f3460', '#264653'] },
-    { name: 'Business', colors: ['#1e3a5f', '#2c5282', '#2b6cb0', '#0d47a1', '#283593', '#1565c0'] },
+    { name: t.palKlassisch, colors: ['#000000', '#333333', '#555555', '#777777', '#999999'] },
+    { name: t.palRotWarm, colors: ['#dc2626', '#ef4444', '#f97316', '#ea580c', '#b91c1c', '#9a3412'] },
+    { name: t.palBlauCool, colors: ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#0369a1', '#1e40af'] },
+    { name: t.palGruenNatur, colors: ['#16a34a', '#15803d', '#166534', '#4ade80', '#059669', '#047857'] },
+    { name: t.palLilaKreativ, colors: ['#7c3aed', '#8b5cf6', '#a855f7', '#6d28d9', '#9333ea', '#c026d3'] },
+    { name: t.palDunkelElegant, colors: ['#0f172a', '#1e293b', '#1a1a2e', '#16213e', '#0f3460', '#264653'] },
+    { name: t.palBusiness, colors: ['#1e3a5f', '#2c5282', '#2b6cb0', '#0d47a1', '#283593', '#1565c0'] },
   ];
 
   return (
@@ -731,7 +708,7 @@ function ColorPickerModal({ color, onChange, onClose }: { color: string; onChang
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900 text-lg">Farbe wählen</h3>
+          <h3 className="font-bold text-gray-900 text-lg">{t.farbeWaehlen}</h3>
           <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -762,7 +739,7 @@ function ColorPickerModal({ color, onChange, onClose }: { color: string; onChang
 
           {/* Hue Slider - Rainbow gradient */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Farbton</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t.farbton}</label>
             <input
               type="range"
               min="0"
@@ -778,7 +755,7 @@ function ColorPickerModal({ color, onChange, onClose }: { color: string; onChang
 
           {/* Saturation Slider */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Sättigung</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t.saettigung}</label>
             <input
               type="range"
               min="0"
@@ -794,7 +771,7 @@ function ColorPickerModal({ color, onChange, onClose }: { color: string; onChang
 
           {/* Lightness Slider */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Helligkeit</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t.helligkeit}</label>
             <input
               type="range"
               min="5"
@@ -806,12 +783,12 @@ function ColorPickerModal({ color, onChange, onClose }: { color: string; onChang
                 background: `linear-gradient(to right, hsl(${hue}, ${saturation}%, 5%), hsl(${hue}, ${saturation}%, 50%))`,
               }}
             />
-            <p className="text-xs text-gray-400 mt-1">Tipp: Dunkle Farben scannen besser</p>
+            <p className="text-xs text-gray-400 mt-1">{t.dunklerBesser}</p>
           </div>
 
           {/* Color Palettes */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Farbpaletten</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t.farbpaletten}</label>
             <div className="space-y-2">
               {PALETTES.map(palette => (
                 <div key={palette.name} className="flex items-center gap-2">
@@ -844,20 +821,20 @@ function ColorPickerModal({ color, onChange, onClose }: { color: string; onChang
             onClick={() => { setTempColor('#000000'); updateFromHSL(0, 0, 0); }}
             className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
-            Zurücksetzen
+            {t.zuruecksetzenBtn}
           </button>
           <div className="flex-1" />
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
           >
-            Abbrechen
+            {t.abbrechen}
           </button>
           <button
             onClick={() => { onChange(tempColor); onClose(); }}
             className="px-6 py-2 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
           >
-            Übernehmen
+            {t.uebernehmen}
           </button>
         </div>
       </div>
@@ -867,12 +844,12 @@ function ColorPickerModal({ color, onChange, onClose }: { color: string; onChang
 
 // ─── Color Picker Component ──────────────────────────────────────────────────
 
-function ColorPicker({ color, onChange }: { color: string; onChange: (c: string) => void }) {
+function ColorPicker({ color, onChange, t }: { color: string; onChange: (c: string) => void; t: import('./i18n').Translations }) {
   const [showPicker, setShowPicker] = useState(false);
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">QR-Code Farbe</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">{t.qrFarbe}</label>
       <button
         onClick={() => setShowPicker(true)}
         className="flex items-center gap-3 px-4 py-2.5 bg-white border border-gray-300 rounded-lg hover:border-red-400 transition-colors cursor-pointer w-full"
@@ -883,7 +860,7 @@ function ColorPicker({ color, onChange }: { color: string; onChange: (c: string)
       </button>
 
       {showPicker && (
-        <ColorPickerModal color={color} onChange={onChange} onClose={() => setShowPicker(false)} />
+        <ColorPickerModal color={color} onChange={onChange} onClose={() => setShowPicker(false)} t={t} />
       )}
     </div>
   );
@@ -1154,7 +1131,7 @@ function handleDownloadJPEG(ref: React.RefObject<HTMLDivElement | null>, filenam
   const totalPx = printPx + margin * 2;
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
   clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  clonedSvg.querySelectorAll('image').forEach(el => el.remove());
+  // Logo bleibt im JPEG
   clonedSvg.setAttribute('width', String(printPx));
   clonedSvg.setAttribute('height', String(printPx));
   const svgData = new XMLSerializer().serializeToString(clonedSvg);
@@ -1238,7 +1215,72 @@ function toWin1252Bytes(str: string): Uint8Array {
 
 // ─── App ─────────────────────────────────────────────────────────────────────
 
+// ─── Language Selector Component ─────────────────────────────────────────────
+
+function LanguageSelector({ lang, setLang }: { lang: LangCode; setLang: (l: LangCode) => void }) {
+  const [open, setOpen] = useState(false);
+  const current = LANGUAGES.find(l => l.code === lang)!;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm transition-colors cursor-pointer"
+      >
+        <span className="text-lg">{current.flag}</span>
+        <span className="text-white font-medium hidden sm:inline">{current.name}</span>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50 max-h-80 overflow-y-auto w-48">
+            {LANGUAGES.map(l => (
+              <button
+                key={l.code}
+                onClick={() => { setLang(l.code); setOpen(false); }}
+                className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer ${lang === l.code ? 'bg-red-50 text-red-600 font-medium' : 'text-gray-700'}`}
+              >
+                <span className="text-lg">{l.flag}</span>
+                {l.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
+  // Language
+  const [lang, setLang] = useState<LangCode>(() => {
+    const saved = localStorage.getItem('qr_lang');
+    if (saved && translations[saved as LangCode]) return saved as LangCode;
+    const browserLang = navigator.language.split('-')[0];
+    if (translations[browserLang as LangCode]) return browserLang as LangCode;
+    return 'de';
+  });
+
+  const t = translations[lang];
+
+  useEffect(() => {
+    localStorage.setItem('qr_lang', lang);
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  // FAQ data from translations
+  const faqData = [
+    { question: t.faq1q, answer: t.faq1a },
+    { question: t.faq2q, answer: t.faq2a },
+    { question: t.faq3q, answer: t.faq3a },
+    { question: t.faq4q, answer: t.faq4a },
+    { question: t.faq5q, answer: t.faq5a },
+    { question: t.faq6q, answer: t.faq6a },
+    { question: t.faq7q, answer: t.faq7a },
+    { question: t.faq8q, answer: t.faq8a },
+    { question: t.faq9q, answer: t.faq9a },
+  ];
+
   // Testphase Passwortschutz
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('qr_unlocked') === '1');
   const [pwInput, setPwInput] = useState('');
@@ -1442,12 +1484,12 @@ export default function App() {
     a.download = vorname ? `${nachname}_${vorname}.vcf` : `${nachname}.vcf`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('VCF-Datei heruntergeladen');
+    showToast(t.toastVcfDownload);
   };
 
   const handleCopyVCard = () => {
     navigator.clipboard.writeText(vCardData);
-    showToast('vCard-Daten in Zwischenablage kopiert');
+    showToast(t.toastVcardCopied);
   };
 
   // JSON Export
@@ -1466,7 +1508,7 @@ export default function App() {
     a.download = `${name.toLowerCase().replace(/\s+/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('JSON-Daten exportiert');
+    showToast(t.toastJsonExported);
   };
 
   // JSON Import
@@ -1494,9 +1536,9 @@ export default function App() {
           linkedin: imported.linkedin || '',
           notizen: imported.notizen || ''
         });
-        showToast('Visitenkarten-Daten importiert');
+        showToast(t.toastJsonImported);
       } catch {
-        showToast('Fehler: Ungültige JSON-Datei');
+        showToast(t.toastJsonError);
       }
     };
     reader.readAsText(file);
@@ -1510,8 +1552,8 @@ export default function App() {
       <div className="min-h-screen bg-gradient-to-br from-red-700 to-rose-600 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
           <div className="text-4xl mb-4">🔒</div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Testphase</h1>
-          <p className="text-sm text-gray-500 mb-6">Diese Seite befindet sich noch in der Entwicklung.</p>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">{t.testphase}</h1>
+          <p className="text-sm text-gray-500 mb-6">{t.testphaseDesc}</p>
           <input
             type="password"
             value={pwInput}
@@ -1523,7 +1565,7 @@ export default function App() {
               }
             }}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none mb-4"
-            placeholder="Passwort"
+            placeholder={t.passwort}
             autoFocus
           />
           <button
@@ -1535,7 +1577,7 @@ export default function App() {
             }}
             className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
           >
-            Zugang
+            {t.zugang}
           </button>
         </div>
       </div>
@@ -1553,28 +1595,28 @@ export default function App() {
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer font-medium"
           >
             <Download className="w-4 h-4" />
-            PNG herunterladen ({printPx}px, {qrDpi} DPI)
+            {t.pngDownload} ({printPx}px, {qrDpi} DPI)
           </button>
           <button
             onClick={() => { incrementCounter(); handleDownloadSVG(qrRef, `${prefix}.svg`, qrSizeCm, qrDpi); }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors cursor-pointer font-medium"
           >
             <Download className="w-4 h-4" />
-            SVG herunterladen (Vektor)
+            {t.svgDownload}
           </button>
           <button
             onClick={() => { incrementCounter(); handleDownloadEPS(qrRef, `${prefix}.eps`, qrSizeCm, qrColor, logoSrc); }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer font-medium"
           >
             <Download className="w-4 h-4" />
-            EPS herunterladen (Druck)
+            {t.epsDownload}
           </button>
           <button
             onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${prefix}-25mm-300dpi.jpg`); }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors cursor-pointer font-medium"
           >
             <Download className="w-4 h-4" />
-            JPEG herunterladen (25mm, 300 DPI)
+            {t.jpegDownload}
           </button>
         </div>
       );
@@ -1587,28 +1629,28 @@ export default function App() {
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer font-medium"
         >
           <Download className="w-4 h-4" />
-          PNG herunterladen (mit Rahmen)
+          {t.pngMitRahmen}
         </button>
         <button
           onClick={() => { incrementCounter(); handleDownloadFrameSVG(qrRef, `${prefix}-${selectedFrame}.svg`); }}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors cursor-pointer font-medium"
         >
           <Download className="w-4 h-4" />
-          SVG herunterladen (mit Rahmen)
+          {t.svgMitRahmen}
         </button>
         <button
           onClick={() => { incrementCounter(); handleDownloadEPS(qrRef, `${prefix}-${selectedFrame}.eps`, qrSizeCm, qrColor, logoSrc); }}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer font-medium"
         >
           <Download className="w-4 h-4" />
-          EPS herunterladen (Druck)
+          {t.epsDownload}
         </button>
         <button
           onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${prefix}-${selectedFrame}-25mm-300dpi.jpg`); }}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors cursor-pointer font-medium"
         >
           <Download className="w-4 h-4" />
-          JPEG herunterladen (25mm, 300 DPI)
+          {t.jpegDownload}
         </button>
       </div>
     );
@@ -1621,13 +1663,13 @@ export default function App() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <QrCode className="w-5 h-5 text-red-600" />
-          QR-Code Vorschau
+          {t.qrVorschau}
         </h2>
 
         {!hasQrValue ? (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400">
             <QrCode className="w-16 h-16 mb-4 opacity-30" />
-            <p className="text-center text-sm">Daten eingeben, um QR-Code zu generieren</p>
+            <p className="text-center text-sm">{t.datenEingeben}</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -1660,13 +1702,14 @@ export default function App() {
               setSelectedFrame={setSelectedFrame}
               frameText={frameText}
               setFrameText={setFrameText}
+              t={t}
             />
 
             {/* Size & DPI */}
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Druckgröße: {qrSizeCm} cm
+                  {t.druckgroesse}: {qrSizeCm} cm
                 </label>
                 <input
                   type="range" min="2" max="15" step="0.5"
@@ -1679,7 +1722,7 @@ export default function App() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Auflösung (DPI)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.aufloesung}</label>
                 <div className="flex gap-2">
                   {[300, 600].map((d) => (
                     <button
@@ -1697,13 +1740,13 @@ export default function App() {
                 </div>
               </div>
               <p className="text-xs text-gray-400">
-                Ausgabe: {printPx} x {printPx} px ({qrSizeCm} cm bei {qrDpi} DPI)
+                {t.ausgabe}: {printPx} x {printPx} px ({qrSizeCm} cm @ {qrDpi} DPI)
               </p>
             </div>
 
             {/* Logo */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Logo in der Mitte</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.logoMitte}</label>
               <div className="space-y-2">
                 <button
                   onClick={() => logoInputRef.current?.click()}
@@ -1714,7 +1757,7 @@ export default function App() {
                   }`}
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  Eigenes Logo hochladen
+                  {t.eigenesLogo}
                 </button>
                 <input
                   ref={logoInputRef}
@@ -1726,7 +1769,7 @@ export default function App() {
                 {customLogo && useLogo && (
                   <div className="flex items-center gap-2 p-2.5 bg-red-50 rounded-lg border border-red-100">
                     <img src={customLogo} alt="Logo" className="h-8 w-8 object-contain rounded" />
-                    <span className="text-xs text-red-700 flex-1 font-medium">Logo aktiv</span>
+                    <span className="text-xs text-red-700 flex-1 font-medium">{t.logoAktiv}</span>
                     <button
                       onClick={() => { setCustomLogo(null); setUseLogo(false); }}
                       className="p-1 text-red-500 hover:bg-red-100 rounded cursor-pointer"
@@ -1743,19 +1786,19 @@ export default function App() {
                       : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  Kein Logo
+                  {t.keinLogo}
                 </button>
               </div>
             </div>
 
-            <ColorPicker color={qrColor} onChange={setQrColor} />
+            <ColorPicker color={qrColor} onChange={setQrColor} t={t} />
 
             <DownloadButtons prefix={prefix} />
 
             {extra}
 
             <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-              <p className="text-xs text-gray-500 font-medium mb-1">QR-Code Inhalt:</p>
+              <p className="text-xs text-gray-500 font-medium mb-1">{t.qrInhalt}</p>
               <p className="text-xs text-gray-700 break-all font-mono">{qrValue}</p>
             </div>
           </div>
@@ -1777,10 +1820,10 @@ export default function App() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Link className="w-5 h-5 text-red-600" />
-              Link eingeben
+              {t.linkEingeben}
             </h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">URL / Link</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.urlLink}</label>
               <input
                 type="url"
                 value={linkUrl}
@@ -1797,10 +1840,10 @@ export default function App() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Wifi className="w-5 h-5 text-red-600" />
-              WiFi-Netzwerk
+              {t.wifiNetzwerk}
             </h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Netzwerkname (SSID)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.netzwerkname}</label>
               <input
                 type="text"
                 value={wifiSsid}
@@ -1810,7 +1853,7 @@ export default function App() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.wifiPasswort}</label>
               <input
                 type="text"
                 value={wifiPassword}
@@ -1820,9 +1863,9 @@ export default function App() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Verschlüsselung</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.wifiVerschluesselung}</label>
               <div className="flex gap-2">
-                {([['WPA', 'WPA/WPA2'], ['WEP', 'WEP'], ['nopass', 'Keine']] as const).map(([val, label]) => (
+                {([['WPA', 'WPA/WPA2'], ['WEP', 'WEP'], ['nopass', t.wifiKeineVerschl]] as const).map(([val, label]) => (
                   <button
                     key={val}
                     onClick={() => setWifiEncryption(val)}
@@ -1848,7 +1891,7 @@ export default function App() {
               E-Mail
             </h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">E-Mail-Adresse</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.emailAdresse}</label>
               <input
                 type="email"
                 value={emailAddress}
@@ -1858,7 +1901,7 @@ export default function App() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Betreff (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.emailBetreff} ({t.optionalLabel})</label>
               <input
                 type="text"
                 value={emailSubject}
@@ -1868,7 +1911,7 @@ export default function App() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nachricht (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.emailNachricht} ({t.optionalLabel})</label>
               <textarea
                 value={emailBody}
                 onChange={(e) => setEmailBody(e.target.value)}
@@ -1888,7 +1931,7 @@ export default function App() {
               SMS
             </h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.telNummer}</label>
               <input
                 type="tel"
                 value={smsNumber}
@@ -1898,7 +1941,7 @@ export default function App() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nachricht (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.emailNachricht} ({t.optionalLabel})</label>
               <textarea
                 value={smsMessage}
                 onChange={(e) => setSmsMessage(e.target.value)}
@@ -1918,7 +1961,7 @@ export default function App() {
               Telefon
             </h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.telNummer}</label>
               <input
                 type="tel"
                 value={telNumber}
@@ -1938,7 +1981,7 @@ export default function App() {
               WhatsApp
             </h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer (mit Landesvorwahl)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.waNummer}</label>
               <input
                 type="tel"
                 value={waNumber}
@@ -1946,10 +1989,10 @@ export default function App() {
                 className={inputClass}
                 placeholder="+49 170 1234567"
               />
-              <p className="text-xs text-gray-400 mt-1">Z.B. +49 für Deutschland</p>
+              <p className="text-xs text-gray-400 mt-1">{t.waLandesvorwahl}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nachricht (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.emailNachricht} ({t.optionalLabel})</label>
               <textarea
                 value={waMessage}
                 onChange={(e) => setWaMessage(e.target.value)}
@@ -1968,18 +2011,18 @@ export default function App() {
               <InstagramIcon large />
               <div className="text-white">
                 <h3 className="font-bold text-lg">Instagram</h3>
-                <p className="text-sm text-white/80">QR-Code zu deinem Instagram-Profil</p>
+                <p className="text-sm text-white/80">{t.socialInstagram}</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.benutzername}</label>
               <input type="text" value={instagramUser} onChange={e => setInstagramUser(e.target.value)}
                 className={inputClass}
                 placeholder="@maxmustermann" />
             </div>
             {instagramUser && (
               <p className="text-xs text-gray-500">
-                Profil-URL: <span className="font-mono text-gray-700">https://instagram.com/{instagramUser.replace('@', '')}</span>
+                {t.profilUrl}: <span className="font-mono text-gray-700">https://instagram.com/{instagramUser.replace('@', '')}</span>
               </p>
             )}
           </div>
@@ -1992,18 +2035,18 @@ export default function App() {
               <TikTokIcon large />
               <div className="text-white">
                 <h3 className="font-bold text-lg">TikTok</h3>
-                <p className="text-sm text-white/80">QR-Code zu deinem TikTok-Profil</p>
+                <p className="text-sm text-white/80">{t.socialTiktok}</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.benutzername}</label>
               <input type="text" value={tiktokUser} onChange={e => setTiktokUser(e.target.value)}
                 className={inputClass}
                 placeholder="@maxmustermann" />
             </div>
             {tiktokUser && (
               <p className="text-xs text-gray-500">
-                Profil-URL: <span className="font-mono text-gray-700">https://tiktok.com/@{tiktokUser.replace('@', '')}</span>
+                {t.profilUrl}: <span className="font-mono text-gray-700">https://tiktok.com/@{tiktokUser.replace('@', '')}</span>
               </p>
             )}
           </div>
@@ -2016,18 +2059,18 @@ export default function App() {
               <FacebookIcon large />
               <div className="text-white">
                 <h3 className="font-bold text-lg">Facebook</h3>
-                <p className="text-sm text-white/80">QR-Code zu deinem Facebook-Profil</p>
+                <p className="text-sm text-white/80">{t.socialFacebook}</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername / Seiten-ID</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.seitenId}</label>
               <input type="text" value={facebookUser} onChange={e => setFacebookUser(e.target.value)}
                 className={inputClass}
                 placeholder="maxmustermann" />
             </div>
             {facebookUser && (
               <p className="text-xs text-gray-500">
-                Profil-URL: <span className="font-mono text-gray-700">https://facebook.com/{facebookUser.replace('@', '')}</span>
+                {t.profilUrl}: <span className="font-mono text-gray-700">https://facebook.com/{facebookUser.replace('@', '')}</span>
               </p>
             )}
           </div>
@@ -2040,18 +2083,18 @@ export default function App() {
               <YouTubeIcon large />
               <div className="text-white">
                 <h3 className="font-bold text-lg">YouTube</h3>
-                <p className="text-sm text-white/80">QR-Code zu deinem YouTube-Kanal</p>
+                <p className="text-sm text-white/80">{t.socialYoutube}</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Kanal-Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.kanalname}</label>
               <input type="text" value={youtubeChannel} onChange={e => setYoutubeChannel(e.target.value)}
                 className={inputClass}
                 placeholder="@maxmustermann" />
             </div>
             {youtubeChannel && (
               <p className="text-xs text-gray-500">
-                Kanal-URL: <span className="font-mono text-gray-700">https://youtube.com/@{youtubeChannel.replace('@', '')}</span>
+                {t.kanalUrl}: <span className="font-mono text-gray-700">https://youtube.com/@{youtubeChannel.replace('@', '')}</span>
               </p>
             )}
           </div>
@@ -2064,18 +2107,18 @@ export default function App() {
               <LinkedInIcon large />
               <div className="text-white">
                 <h3 className="font-bold text-lg">LinkedIn</h3>
-                <p className="text-sm text-white/80">QR-Code zu deinem LinkedIn-Profil</p>
+                <p className="text-sm text-white/80">{t.socialLinkedin}</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Profil-Name (aus der URL)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.profilName}</label>
               <input type="text" value={linkedinUser} onChange={e => setLinkedinUser(e.target.value)}
                 className={inputClass}
                 placeholder="max-mustermann" />
             </div>
             {linkedinUser && (
               <p className="text-xs text-gray-500">
-                Profil-URL: <span className="font-mono text-gray-700">https://linkedin.com/in/{linkedinUser.replace('@', '')}</span>
+                {t.profilUrl}: <span className="font-mono text-gray-700">https://linkedin.com/in/{linkedinUser.replace('@', '')}</span>
               </p>
             )}
           </div>
@@ -2088,18 +2131,18 @@ export default function App() {
               <XIcon large />
               <div className="text-white">
                 <h3 className="font-bold text-lg">X (Twitter)</h3>
-                <p className="text-sm text-white/80">QR-Code zu deinem X-Profil</p>
+                <p className="text-sm text-white/80">{t.socialTwitter}</p>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.benutzername}</label>
               <input type="text" value={twitterUser} onChange={e => setTwitterUser(e.target.value)}
                 className={inputClass}
                 placeholder="@maxmustermann" />
             </div>
             {twitterUser && (
               <p className="text-xs text-gray-500">
-                Profil-URL: <span className="font-mono text-gray-700">https://x.com/{twitterUser.replace('@', '')}</span>
+                {t.profilUrl}: <span className="font-mono text-gray-700">https://x.com/{twitterUser.replace('@', '')}</span>
               </p>
             )}
           </div>
@@ -2111,14 +2154,14 @@ export default function App() {
             <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500">
               <GoogleIcon large />
               <div className="text-white">
-                <h3 className="font-bold text-lg">Google Bewertung</h3>
-                <p className="text-sm text-white/80">QR-Code für Kundenbewertungen auf Google</p>
+                <h3 className="font-bold text-lg">{t.googleTitle}</h3>
+                <p className="text-sm text-white/80">{t.googleDesc}</p>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Google Maps Link oder Place ID
+                {t.googleInput}
               </label>
               <input
                 type="text"
@@ -2131,7 +2174,7 @@ export default function App() {
 
             {googlePlaceId && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800 font-medium">Place ID erkannt!</p>
+                <p className="text-sm text-green-800 font-medium">{t.googlePlaceFound}</p>
                 <p className="text-xs text-green-600 font-mono mt-1">{googlePlaceId}</p>
                 <p className="text-xs text-green-700 mt-2">
                   Bewertungslink: <span className="font-mono">https://search.google.com/local/writereview?placeid={googlePlaceId}</span>
@@ -2141,27 +2184,27 @@ export default function App() {
 
             {googleInput && !googlePlaceId && !googleInput.startsWith('http') && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800">Place ID konnte nicht automatisch erkannt werden. Bitte fügen Sie Ihren Google Maps Link ein.</p>
+                <p className="text-sm text-amber-800">{t.googleNotFound}</p>
               </div>
             )}
 
             {googleInput && !googlePlaceId && googleInput.startsWith('http') && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">Link erkannt - QR-Code wird mit diesem Link erstellt.</p>
+                <p className="text-sm text-blue-800">{t.googleLinkFound}</p>
               </div>
             )}
 
             {/* Instructions */}
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
-              <h4 className="font-semibold text-gray-900 text-sm mb-3">So finden Sie Ihren Google Maps Link:</h4>
+              <h4 className="font-semibold text-gray-900 text-sm mb-3">{t.googleHowTo}</h4>
               <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
-                <li>Öffnen Sie <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" className="text-red-600 underline">Google Maps</a></li>
-                <li>Suchen Sie Ihr Geschäft / Restaurant / Unternehmen</li>
-                <li>Klicken Sie auf <strong>"Teilen"</strong></li>
-                <li>Kopieren Sie den <strong>Link</strong> und fügen Sie ihn oben ein</li>
+                <li>{t.googleStep1}: <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" className="text-red-600 underline">Google Maps</a></li>
+                <li>{t.googleStep2}</li>
+                <li>{t.googleStep3}</li>
+                <li>{t.googleStep4}</li>
               </ol>
               <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
-                <p className="text-xs font-semibold text-gray-700 mb-1">Alternative: Place ID direkt eingeben</p>
+                <p className="text-xs font-semibold text-gray-700 mb-1">{t.googleAlt}</p>
                 <p className="text-xs text-gray-500">
                   Ihre Place ID finden Sie auf: <a href="https://developers.google.com/maps/documentation/places/web-service/place-id-finder" target="_blank" rel="noopener noreferrer" className="text-red-600 underline">Google Place ID Finder</a>
                 </p>
@@ -2176,7 +2219,7 @@ export default function App() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-red-600" />
-                Visitenkarten-Daten
+                {t.tabVisitenkarte}
               </h2>
               <div className="flex items-center gap-2">
                 <button
@@ -2184,14 +2227,14 @@ export default function App() {
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors cursor-pointer font-medium text-xs"
                 >
                   <FileUp className="w-3.5 h-3.5" />
-                  JSON laden
+                  {t.jsonLaden}
                 </button>
                 <button
                   onClick={handleExportJSON}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors cursor-pointer font-medium text-xs"
                 >
                   <FileDown className="w-3.5 h-3.5" />
-                  JSON speichern
+                  {t.jsonSpeichern}
                 </button>
                 <input
                   ref={jsonInputRef}
@@ -2206,14 +2249,14 @@ export default function App() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vorname</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.vorname}</label>
                   <input type="text" value={formData.vorname}
                     onChange={(e) => handleInputChange('vorname', e.target.value)}
                     className={inputClass}
                     placeholder="Max" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nachname</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.nachname}</label>
                   <input type="text" value={formData.nachname}
                     onChange={(e) => handleInputChange('nachname', e.target.value)}
                     className={inputClass}
@@ -2223,7 +2266,7 @@ export default function App() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <Building className="w-4 h-4" /> Firma
+                  <Building className="w-4 h-4" /> {t.firma}
                 </label>
                 <input type="text" value={formData.firma}
                   onChange={(e) => handleInputChange('firma', e.target.value)}
@@ -2232,7 +2275,7 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t.position}</label>
                 <input type="text" value={formData.position}
                   onChange={(e) => handleInputChange('position', e.target.value)}
                   className={inputClass}
@@ -2292,14 +2335,14 @@ export default function App() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">PLZ</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.plz}</label>
                   <input type="text" value={formData.plz}
                     onChange={(e) => handleInputChange('plz', e.target.value)}
                     className={inputClass}
                     placeholder="12345" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.ort}</label>
                   <input type="text" value={formData.ort}
                     onChange={(e) => handleInputChange('ort', e.target.value)}
                     className={inputClass}
@@ -2333,7 +2376,7 @@ export default function App() {
                   onClick={() => setFormData({ ...EMPTY_FORM })}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm cursor-pointer"
                 >
-                  Felder leeren
+                  {t.felderLeeren}
                 </button>
               </div>
             </div>
@@ -2371,19 +2414,19 @@ export default function App() {
           className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer font-medium text-sm"
         >
           <Download className="w-4 h-4" />
-          VCF exportieren
+          {t.vcfExport}
         </button>
         <button
           onClick={handleCopyVCard}
           className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer font-medium text-sm"
         >
           <Copy className="w-4 h-4" />
-          vCard kopieren
+          {t.vcardKopieren}
         </button>
       </div>
       <details className="group">
         <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 font-medium">
-          vCard-Daten anzeigen
+          {t.vcardAnzeigen}
         </summary>
         <pre className="mt-2 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 overflow-x-auto border border-gray-100 whitespace-pre-wrap">
           {vCardData}
@@ -2395,20 +2438,20 @@ export default function App() {
   // ─── Feature Cards Data ──────────────────────────────────────────────────────
 
   const FEATURE_CARDS: { id: TabType; title: string; icon: React.ReactNode; description: string; qrValue: string }[] = [
-    { id: 'visitenkarte', title: 'Visitenkarte (vCard)', icon: <User className="w-5 h-5 text-red-600" />, description: 'Erstelle QR-Codes mit deinen Kontaktdaten. Beim Scannen werden Name, Telefon, E-Mail und Adresse direkt ins Adressbuch importiert.', qrValue: 'BEGIN:VCARD' },
-    { id: 'link', title: 'Link / URL', icon: <Link className="w-5 h-5 text-red-600" />, description: 'Verlinke auf jede beliebige Website. Ideal für Flyer, Plakate, Visitenkarten und Produktverpackungen.', qrValue: 'https://qrcode-no-abo.de' },
-    { id: 'google-review', title: 'Google Bewertung', icon: <GoogleIcon />, description: 'Führe Kunden direkt zu deiner Google-Bewertungsseite. Perfekt für Restaurants, Geschäfte und Dienstleister.', qrValue: 'https://google.com/maps' },
-    { id: 'wifi', title: 'WiFi', icon: <Wifi className="w-5 h-5 text-red-600" />, description: 'Gäste verbinden sich per Scan direkt mit deinem WLAN. Kein Passwort abtippen mehr nötig.', qrValue: 'WIFI:T:WPA;S:MeinWLAN;;' },
-    { id: 'email', title: 'E-Mail', icon: <Mail className="w-5 h-5 text-red-600" />, description: 'Erstelle QR-Codes die eine vorausgefüllte E-Mail öffnen. Ideal für Kontaktanfragen und Support.', qrValue: 'mailto:info@example.de' },
-    { id: 'sms', title: 'SMS', icon: <MessageSquare className="w-5 h-5 text-red-600" />, description: 'QR-Code für vorausgefüllte SMS-Nachrichten. Perfekt für Bestellungen und Rückruf-Bitten.', qrValue: 'smsto:+49123:Hallo' },
-    { id: 'telefon', title: 'Telefon', icon: <Phone className="w-5 h-5 text-red-600" />, description: 'Ein Scan genügt und dein Telefon startet den Anruf. Ideal für Notfall-Kontakte und Service-Nummern.', qrValue: 'tel:+49123456' },
-    { id: 'whatsapp', title: 'WhatsApp', icon: <MessageCircle className="w-5 h-5 text-green-600" />, description: 'Direkter Link zu deinem WhatsApp-Chat mit vorausgefüllter Nachricht. Perfekt für Kundenservice.', qrValue: 'https://wa.me/49123' },
-    { id: 'instagram', title: 'Instagram', icon: <InstagramIcon />, description: 'QR-Code direkt zu deinem Instagram-Profil. Perfekt für Social Media Marketing.', qrValue: 'https://instagram.com' },
-    { id: 'tiktok', title: 'TikTok', icon: <TikTokIcon />, description: 'Verlinke auf dein TikTok-Profil per QR-Code. Ideal für Creator und Marken.', qrValue: 'https://tiktok.com' },
-    { id: 'facebook', title: 'Facebook', icon: <FacebookIcon />, description: 'QR-Code zu deiner Facebook-Seite oder deinem Profil.', qrValue: 'https://facebook.com' },
-    { id: 'youtube', title: 'YouTube', icon: <YouTubeIcon />, description: 'Verlinke direkt auf deinen YouTube-Kanal per QR-Code.', qrValue: 'https://youtube.com' },
-    { id: 'linkedin', title: 'LinkedIn', icon: <LinkedInIcon />, description: 'Professioneller QR-Code zu deinem LinkedIn-Profil. Ideal für Networking und Visitenkarten.', qrValue: 'https://linkedin.com' },
-    { id: 'twitter', title: 'X (Twitter)', icon: <XIcon />, description: 'QR-Code zu deinem X/Twitter-Profil.', qrValue: 'https://x.com' },
+    { id: 'visitenkarte', title: t.tabVisitenkarte, icon: <User className="w-5 h-5 text-red-600" />, description: t.descVisitenkarte, qrValue: 'BEGIN:VCARD' },
+    { id: 'link', title: t.tabLink, icon: <Link className="w-5 h-5 text-red-600" />, description: t.descLink, qrValue: 'https://qrcode-no-abo.de' },
+    { id: 'google-review', title: t.tabGoogleReview, icon: <GoogleIcon />, description: t.descGoogleReview, qrValue: 'https://google.com/maps' },
+    { id: 'wifi', title: t.tabWifi, icon: <Wifi className="w-5 h-5 text-red-600" />, description: t.descWifi, qrValue: 'WIFI:T:WPA;S:MeinWLAN;;' },
+    { id: 'email', title: t.tabEmail, icon: <Mail className="w-5 h-5 text-red-600" />, description: t.descEmail, qrValue: 'mailto:info@example.de' },
+    { id: 'sms', title: t.tabSms, icon: <MessageSquare className="w-5 h-5 text-red-600" />, description: t.descSms, qrValue: 'smsto:+49123:Hallo' },
+    { id: 'telefon', title: t.tabTelefon, icon: <Phone className="w-5 h-5 text-red-600" />, description: t.descTelefon, qrValue: 'tel:+49123456' },
+    { id: 'whatsapp', title: t.tabWhatsapp, icon: <MessageCircle className="w-5 h-5 text-green-600" />, description: t.descWhatsapp, qrValue: 'https://wa.me/49123' },
+    { id: 'instagram', title: t.tabInstagram, icon: <InstagramIcon />, description: t.descInstagram, qrValue: 'https://instagram.com' },
+    { id: 'tiktok', title: t.tabTiktok, icon: <TikTokIcon />, description: t.descTiktok, qrValue: 'https://tiktok.com' },
+    { id: 'facebook', title: t.tabFacebook, icon: <FacebookIcon />, description: t.descFacebook, qrValue: 'https://facebook.com' },
+    { id: 'youtube', title: t.tabYoutube, icon: <YouTubeIcon />, description: t.descYoutube, qrValue: 'https://youtube.com' },
+    { id: 'linkedin', title: t.tabLinkedin, icon: <LinkedInIcon />, description: t.descLinkedin, qrValue: 'https://linkedin.com' },
+    { id: 'twitter', title: t.tabTwitter, icon: <XIcon />, description: t.descTwitter, qrValue: 'https://x.com' },
   ];
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -2425,7 +2468,7 @@ export default function App() {
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white">
+      <header className="bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white relative">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-3 mb-3">
@@ -2437,27 +2480,29 @@ export default function App() {
               </h1>
             </div>
             <p className="text-lg sm:text-xl font-semibold text-white/90 mb-2">
-              Kostenlos. Open Source. Ohne Abo.
+              {t.subtitle}
             </p>
             {!showGenerator && (
               <p className="text-sm sm:text-base text-white/75 max-w-xl mb-3">
-                Diese Website ist ein Open-Source-Projekt und verdient keinerlei Geld.
-                Keine Cookies. Keine Tracker. Alle Daten bleiben in deinem Browser.
+                {t.headerDesc}
               </p>
             )}
             {showGenerator && (
               <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mt-2">
                 <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium">
-                  <Zap className="w-4 h-4" /> Kostenlos
+                  <Zap className="w-4 h-4" /> {t.kostenlos}
                 </span>
                 <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium">
-                  <Lock className="w-4 h-4" /> Ohne Abo
+                  <Lock className="w-4 h-4" /> {t.ohneAbo}
                 </span>
                 <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium">
-                  <Shield className="w-4 h-4" /> Ohne Registrierung
+                  <Shield className="w-4 h-4" /> {t.ohneRegistrierung}
                 </span>
               </div>
             )}
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+              <LanguageSelector lang={lang} setLang={setLang} />
+            </div>
           </div>
         </div>
       </header>
@@ -2472,7 +2517,7 @@ export default function App() {
                 className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-red-600 transition-colors cursor-pointer font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Zurück zur Übersicht
+                {t.zurueckUebersicht}
               </button>
             </div>
           </div>
@@ -2486,7 +2531,7 @@ export default function App() {
 
             {/* Other QR Types - Mini Cards */}
             <div className="mt-10">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Weitere QR-Code Typen</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">{t.weitereTypen}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
                 {FEATURE_CARDS.filter(card => card.id !== activeTab).map(card => (
                   <button
@@ -2514,10 +2559,10 @@ export default function App() {
           {/* Landing Page: Feature Cards */}
           <section className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-2">
-              Was kannst du hier erstellen?
+              {t.landingTitle}
             </h2>
             <p className="text-gray-500 text-center mb-8 text-sm sm:text-base">
-              Wähle einen QR-Code Typ und leg direkt los - kostenlos und ohne Anmeldung.
+              {t.landingSubtitle}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {FEATURE_CARDS.map(card => (
@@ -2547,12 +2592,12 @@ export default function App() {
           <section className="bg-white border-t border-b border-gray-200 py-6">
             <div className="max-w-screen-2xl mx-auto px-4 sm:px-6">
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-700">
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> 14 QR-Code Typen</span>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> 8 Rahmen-Templates</span>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> PNG, SVG, EPS, JPEG</span>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> 100% im Browser</span>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> Kein Tracking</span>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> Open Source</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> {t.featureTypes}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> {t.featureFrames}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> {t.featureFormats}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> {t.featureBrowser}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> {t.featureTracking}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-600" /> {t.featureOpenSource}</span>
               </div>
             </div>
           </section>
@@ -2561,29 +2606,29 @@ export default function App() {
           <section className="bg-white py-12 sm:py-16">
             <div className="max-w-screen-2xl mx-auto px-4 sm:px-6">
               <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">
-                Warum qrcode-no-abo.de?
+                {t.whyTitle}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   {
                     icon: <Zap className="w-6 h-6" />,
-                    title: '100% Kostenlos',
-                    desc: 'Keine versteckten Kosten. Kein Abo. Kein Haken.'
+                    title: t.whyFreeTitle,
+                    desc: t.whyFreeDesc
                   },
                   {
                     icon: <Shield className="w-6 h-6" />,
-                    title: 'Datenschutz',
-                    desc: 'Alle Daten werden nur in deinem Browser verarbeitet. Nichts wird an einen Server gesendet.'
+                    title: t.whyPrivacyTitle,
+                    desc: t.whyPrivacyDesc
                   },
                   {
                     icon: <Download className="w-6 h-6" />,
-                    title: 'Profi-Formate',
-                    desc: 'Export als PNG, SVG, EPS und JPEG in druckfähiger Qualität.'
+                    title: t.whyFormatsTitle,
+                    desc: t.whyFormatsDesc
                   },
                   {
                     icon: <Smartphone className="w-6 h-6" />,
-                    title: 'Mobile-optimiert',
-                    desc: 'Funktioniert auf jedem Gerät - vom Handy bis zum Desktop.'
+                    title: t.whyMobileTitle,
+                    desc: t.whyMobileDesc
                   }
                 ].map((item, i) => (
                   <div key={i} className="text-center p-6 rounded-xl bg-gray-50 border border-gray-100">
@@ -2602,9 +2647,9 @@ export default function App() {
 
       {/* FAQ Section */}
       <section className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-12">
-        <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Häufig gestellte Fragen</h2>
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">{t.faqTitle}</h2>
         <div className="max-w-3xl mx-auto space-y-3">
-          {FAQ_DATA.map((faq, i) => (
+          {faqData.map((faq, i) => (
             <details key={i} className="group bg-white rounded-xl border border-gray-200 shadow-sm">
               <summary className="flex items-center justify-between p-5 cursor-pointer font-semibold text-gray-900 text-sm sm:text-base">
                 {faq.question}
@@ -2622,18 +2667,20 @@ export default function App() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-center sm:text-left">
               <p className="text-sm font-medium text-gray-300">qrcode-no-abo.de</p>
-              <p className="text-xs mt-1">Kostenloser QR-Code Generator - Alle Daten bleiben in deinem Browser.</p>
+              <p className="text-xs mt-1">{t.footerDesc}</p>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <button onClick={() => setShowImpressum(true)} className="hover:text-white transition-colors cursor-pointer">Impressum</button>
+              <button onClick={() => setShowImpressum(true)} className="hover:text-white transition-colors cursor-pointer">{t.impressum}</button>
               <span className="text-gray-600">|</span>
-              <button onClick={() => setShowDatenschutz(true)} className="hover:text-white transition-colors cursor-pointer">Datenschutz</button>
+              <button onClick={() => setShowDatenschutz(true)} className="hover:text-white transition-colors cursor-pointer">{t.datenschutz}</button>
+              <span className="text-gray-600">|</span>
+              <a href="https://github.com/Baha0077/qrcode-no-abo" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
             </div>
           </div>
           {/* Kaffee + Counter */}
           <div className="mt-6 pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-500">
-              <span className="font-mono text-red-400 text-sm font-bold">{qrCounter.toLocaleString('de-DE')}</span> QR-Codes erstellt
+              <span className="font-mono text-red-400 text-sm font-bold">{qrCounter.toLocaleString('de-DE')}</span> {t.qrCodesErstellt}
             </p>
             <a
               href="https://paypal.me/Erguellue"
@@ -2642,7 +2689,7 @@ export default function App() {
               className="inline-flex items-center gap-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-medium px-4 py-2 rounded-full transition-colors text-xs"
             >
               <Coffee className="w-3.5 h-3.5" />
-              Kaffee spendieren ☕
+              {t.kaffeeSpendieren} ☕
             </a>
           </div>
         </div>
