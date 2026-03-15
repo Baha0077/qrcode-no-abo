@@ -1293,7 +1293,7 @@ export default function App() {
   const [linkUrl, setLinkUrl] = useState('');
 
   // Visitenkarte tab state
-  const [formData, setFormData] = useState<BusinessCardData>({ ...DEMO_FORM });
+  const [formData, setFormData] = useState<BusinessCardData>({ ...EMPTY_FORM });
 
   // WiFi tab state
   const [wifiSsid, setWifiSsid] = useState('');
