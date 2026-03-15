@@ -2929,10 +2929,6 @@ export default function App() {
               <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />Deutschland</p>
               <h3 className="text-lg font-semibold text-gray-900">Kontakt:</h3>
               <p>E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 3700800</p>
-              <h3 className="text-lg font-semibold text-gray-900">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:</h3>
-              <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen</p>
-              <h3 className="text-lg font-semibold text-gray-900">EU-Streitschlichtung</h3>
-              <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">https://ec.europa.eu/consumers/odr/</a>. Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
               <h3 className="text-lg font-semibold text-gray-900">Haftungsausschluss:</h3>
               <h4 className="text-base font-semibold text-gray-800">Haftung für Inhalte</h4>
               <p>Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.</p>
@@ -2961,23 +2957,37 @@ export default function App() {
               <h3 className="text-lg font-semibold text-gray-900">2. Hosting</h3>
               <p>Diese Website wird über Cloudflare Workers gehostet. Cloudflare kann technisch bedingt Zugriffsdaten (IP-Adresse, Zeitpunkt des Zugriffs, Browser-Typ) in Server-Logfiles speichern. Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem zuverlässigen Hosting). Details: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">Cloudflare Datenschutzerklärung</a></p>
               <h3 className="text-lg font-semibold text-gray-900">3. Cloudflare Web Analytics</h3>
-              <p>Wir verwenden Cloudflare Web Analytics zur anonymen Besucherstatistik. Dieses Tool verwendet <strong>KEINE Cookies</strong> und speichert <strong>KEINE personenbezogenen Daten</strong>. Es werden lediglich aggregierte, anonyme Nutzungsstatistiken erfasst (z.B. Seitenaufrufe, Herkunftsland). Eine Zuordnung zu einzelnen Personen ist nicht möglich.</p>
-              <h3 className="text-lg font-semibold text-gray-900">4. QR-Code Zähler</h3>
-              <p>Beim Herunterladen eines QR-Codes wird ein anonymer Zähler auf unserem Server um 1 erhöht. Dabei werden <strong>keine personenbezogenen Daten</strong> übertragen - es wird lediglich die Gesamtanzahl der erstellten QR-Codes gespeichert. Weder IP-Adressen noch andere identifizierende Informationen werden erfasst.</p>
-              <h3 className="text-lg font-semibold text-gray-900">5. Lokale Datenspeicherung (localStorage)</h3>
-              <p>Ihr Browser speichert lokal folgende Einstellungen:</p>
+              <p>Wir verwenden Cloudflare Web Analytics zur anonymen Besucherstatistik. Dieses Tool verwendet <strong>KEINE Cookies</strong> und speichert <strong>KEINE personenbezogenen Daten</strong>. Es werden lediglich aggregierte, anonyme Nutzungsstatistiken erfasst (z.B. Seitenaufrufe, Herkunftsland). Eine Zuordnung zu einzelnen Personen ist nicht möglich. Cloudflare ist unter dem <strong>EU-US Data Privacy Framework (DPF)</strong> zertifiziert. Details: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">Cloudflare Datenschutzerklärung</a></p>
+              <h3 className="text-lg font-semibold text-gray-900">4. Anonyme Zähler</h3>
+              <p>Beim Herunterladen eines QR-Codes sowie beim erstmaligen Besuch der Seite wird jeweils ein anonymer Zähler auf unserem Server um 1 erhöht. Dabei werden <strong>keine personenbezogenen Daten</strong> gespeichert - es wird lediglich die Gesamtanzahl gespeichert. Weder IP-Adressen noch andere identifizierende Informationen werden von uns erfasst. Die technisch bedingte Übertragung der IP-Adresse an Cloudflare Workers ist durch Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse) gedeckt.</p>
+              <h3 className="text-lg font-semibold text-gray-900">5. Lokale Browserspeicher</h3>
+              <p>Ihr Browser speichert lokal (localStorage und sessionStorage) folgende Einstellungen:</p>
               <ul className="list-disc list-inside text-sm space-y-1">
-                <li>Gewählte Sprache (damit Sie beim nächsten Besuch nicht erneut wählen müssen)</li>
-                <li>Passwort-Status der Testphase (temporär)</li>
+                <li>Gewählte Sprache (localStorage - bleibt bis zum Löschen)</li>
+                <li>Besuchsstatus für Zähler (sessionStorage - wird beim Schließen des Tabs gelöscht)</li>
               </ul>
-              <p>Diese Daten werden <strong>nicht</strong> an unsere Server übertragen und können jederzeit über die Browser-Einstellungen gelöscht werden. Es handelt sich dabei nicht um Cookies.</p>
+              <p>Diese Daten werden <strong>nicht</strong> an unsere Server übertragen und können jederzeit über die Browser-Einstellungen gelöscht werden. Es handelt sich dabei <strong>nicht um Cookies</strong>.</p>
               <h3 className="text-lg font-semibold text-gray-900">6. Ihre eingegebenen Daten</h3>
               <p>Alle Daten, die Sie in die Formulare eingeben (Namen, Telefonnummern, E-Mail-Adressen, URLs etc.), werden <strong>ausschließlich lokal in Ihrem Browser</strong> verarbeitet. Es findet <strong>keine Übertragung</strong> an unsere oder fremde Server statt. Beim Schließen des Browsers werden alle eingegebenen Daten gelöscht, sofern Sie diese nicht selbst als JSON- oder VCF-Datei exportiert haben.</p>
               <h3 className="text-lg font-semibold text-gray-900">7. Externe Dienste</h3>
-              <p>Für die Anzeige der Länderflaggen im Sprach-Selector werden Bilder von <strong>flagcdn.com</strong> geladen. Dabei kann der Anbieter technisch bedingt Ihre IP-Adresse erfahren.</p>
+              <h4 className="text-base font-semibold text-gray-800">Länderflaggen (flagcdn.com)</h4>
+              <p>Für die Anzeige der Länderflaggen im Sprach-Selector werden Bilder von <strong>flagcdn.com</strong> geladen. Dabei kann der Anbieter technisch bedingt Ihre IP-Adresse erfahren. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer benutzerfreundlichen Darstellung).</p>
+              <h4 className="text-base font-semibold text-gray-800">PayPal (Spenden)</h4>
+              <p>Wenn Sie auf den Spenden-Button klicken, werden Sie zu <strong>PayPal</strong> (PayPal (Europe) S.à r.l. et Cie, S.C.A., Luxemburg) weitergeleitet. Dabei wird Ihre IP-Adresse an PayPal übermittelt. Die weitere Datenverarbeitung erfolgt gemäß der <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">PayPal Datenschutzerklärung</a>. PayPal ist unter dem EU-US Data Privacy Framework zertifiziert. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Ihre Einwilligung durch den Klick).</p>
               <h3 className="text-lg font-semibold text-gray-900">8. Ihre Rechte</h3>
-              <p>Da wir keine personenbezogenen Daten erheben oder speichern, entfallen die üblichen Betroffenenrechte (Auskunft, Löschung, Berichtigung etc.) in Bezug auf diese Website. Sie können sich dennoch jederzeit an uns wenden.</p>
-              <h3 className="text-lg font-semibold text-gray-900">9. Verantwortlicher</h3>
+              <p>Soweit personenbezogene Daten verarbeitet werden (z.B. IP-Adresse durch Cloudflare), stehen Ihnen folgende Rechte gemäß DSGVO zu:</p>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>Recht auf Auskunft (Art. 15 DSGVO)</li>
+                <li>Recht auf Berichtigung (Art. 16 DSGVO)</li>
+                <li>Recht auf Löschung (Art. 17 DSGVO)</li>
+                <li>Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)</li>
+                <li>Recht auf Widerspruch (Art. 21 DSGVO)</li>
+                <li>Recht auf Datenübertragbarkeit (Art. 20 DSGVO)</li>
+                <li>Recht auf Beschwerde bei einer Aufsichtsbehörde (Art. 77 DSGVO)</li>
+              </ul>
+              <h3 className="text-lg font-semibold text-gray-900">9. Aufsichtsbehörde</h3>
+              <p>Zuständige Aufsichtsbehörde:<br />Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen (LDI NRW)<br />Kavalleriestraße 2-4<br />40213 Düsseldorf<br /><a href="https://www.ldi.nrw.de" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">www.ldi.nrw.de</a></p>
+              <h3 className="text-lg font-semibold text-gray-900">10. Verantwortlicher</h3>
               <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 3700800</p>
             </div>
           </div>
