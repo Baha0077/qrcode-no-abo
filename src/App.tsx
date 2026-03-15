@@ -1250,43 +1250,6 @@ export default function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('qr_unlocked') === '1');
   const [pwInput, setPwInput] = useState('');
 
-  if (!unlocked) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-700 to-rose-600 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
-          <div className="text-4xl mb-4">🔒</div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Testphase</h1>
-          <p className="text-sm text-gray-500 mb-6">Diese Seite befindet sich noch in der Entwicklung.</p>
-          <input
-            type="password"
-            value={pwInput}
-            onChange={(e) => setPwInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && pwInput === '54321!') {
-                sessionStorage.setItem('qr_unlocked', '1');
-                setUnlocked(true);
-              }
-            }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none mb-4"
-            placeholder="Passwort"
-            autoFocus
-          />
-          <button
-            onClick={() => {
-              if (pwInput === '54321!') {
-                sessionStorage.setItem('qr_unlocked', '1');
-                setUnlocked(true);
-              }
-            }}
-            className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-          >
-            Zugang
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const [activeTab, setActiveTab] = useState<TabType>('visitenkarte');
   const [showGenerator, setShowGenerator] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -1546,6 +1509,45 @@ export default function App() {
     reader.readAsText(file);
     e.target.value = '';
   };
+
+  // ─── Passwortschutz (Testphase) ─────────────────────────────────────────────
+
+  if (!unlocked) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-700 to-rose-600 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+          <div className="text-4xl mb-4">🔒</div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Testphase</h1>
+          <p className="text-sm text-gray-500 mb-6">Diese Seite befindet sich noch in der Entwicklung.</p>
+          <input
+            type="password"
+            value={pwInput}
+            onChange={(e) => setPwInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && pwInput === '54321!') {
+                sessionStorage.setItem('qr_unlocked', '1');
+                setUnlocked(true);
+              }
+            }}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none mb-4"
+            placeholder="Passwort"
+            autoFocus
+          />
+          <button
+            onClick={() => {
+              if (pwInput === '54321!') {
+                sessionStorage.setItem('qr_unlocked', '1');
+                setUnlocked(true);
+              }
+            }}
+            className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+          >
+            Zugang
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Download Buttons Component ──────────────────────────────────────────────
 
@@ -2445,23 +2447,10 @@ export default function App() {
               Kostenlos. Open Source. Ohne Abo.
             </p>
             {!showGenerator && (
-              <>
-                <p className="text-sm sm:text-base text-white/75 max-w-xl mb-3">
-                  Diese Website ist ein Open-Source-Projekt und verdient keinerlei Geld.
-                  Keine Cookies. Keine Tracker. Alle Daten bleiben in deinem Browser.
-                </p>
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <a
-                    href="https://paypal.me/Erguellue"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-amber-900 font-bold px-5 py-2.5 rounded-full transition-colors text-sm shadow-lg"
-                  >
-                    <Coffee className="w-4 h-4" />
-                    Kaffee spendieren ☕
-                  </a>
-                </div>
-              </>
+              <p className="text-sm sm:text-base text-white/75 max-w-xl mb-3">
+                Diese Website ist ein Open-Source-Projekt und verdient keinerlei Geld.
+                Keine Cookies. Keine Tracker. Alle Daten bleiben in deinem Browser.
+              </p>
             )}
             {showGenerator && (
               <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mt-2">
@@ -2648,11 +2637,20 @@ export default function App() {
               <button onClick={() => setShowDatenschutz(true)} className="hover:text-white transition-colors cursor-pointer">Datenschutz</button>
             </div>
           </div>
-          {/* Counter */}
-          <div className="mt-6 pt-4 border-t border-gray-800 text-center">
+          {/* Kaffee + Counter */}
+          <div className="mt-6 pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-500">
               <span className="font-mono text-red-400 text-sm font-bold">{qrCounter.toLocaleString('de-DE')}</span> QR-Codes erstellt
             </p>
+            <a
+              href="https://paypal.me/Erguellue"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-medium px-4 py-2 rounded-full transition-colors text-xs"
+            >
+              <Coffee className="w-3.5 h-3.5" />
+              Kaffee spendieren ☕
+            </a>
           </div>
         </div>
       </footer>
