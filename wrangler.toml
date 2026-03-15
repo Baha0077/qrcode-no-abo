@@ -1,5 +1,10 @@
 name = "qrcode-no-abo"
 compatibility_date = "2026-03-15"
+main = "worker/index.ts"
 
 [assets]
 directory = "dist"
+
+[[kv_namespaces]]
+binding = "COUNTER"
+id = "ddd1ea64efbf4636b3dcf0b42ec8cf62"

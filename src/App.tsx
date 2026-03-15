@@ -1297,18 +1297,19 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // QR Code Counter
-  const [qrCounter, setQrCounter] = useState(() => {
-    const saved = localStorage.getItem('qr_counter');
-    return saved ? parseInt(saved, 10) : 0;
-  });
+  // QR Code Counter - Global (Cloudflare KV) + Session (local)
+  const [globalCounter, setGlobalCounter] = useState(0);
+  const [sessionCounter, setSessionCounter] = useState(0);
+
+  // Load global counter on mount
+  useEffect(() => {
+    fetch('/api/counter').then(r => r.json()).then(d => setGlobalCounter(d.count)).catch(() => {});
+  }, []);
 
   const incrementCounter = () => {
-    setQrCounter(prev => {
-      const next = prev + 1;
-      localStorage.setItem('qr_counter', String(next));
-      return next;
-    });
+    setSessionCounter(prev => prev + 1);
+    setGlobalCounter(prev => prev + 1);
+    fetch('/api/counter', { method: 'POST' }).catch(() => {});
   };
 
   // Shared QR settings
@@ -2680,7 +2681,10 @@ export default function App() {
           {/* Kaffee + Counter */}
           <div className="mt-6 pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-500">
-              <span className="font-mono text-red-400 text-sm font-bold">{qrCounter.toLocaleString('de-DE')}</span> {t.qrCodesErstellt}
+              <span className="font-mono text-red-400 text-sm font-bold">{globalCounter.toLocaleString('de-DE')}</span> {t.qrCodesErstellt}
+              {sessionCounter > 0 && (
+                <span className="text-gray-600 ml-2">({sessionCounter} in dieser Session)</span>
+              )}
             </p>
             <a
               href="https://paypal.me/Erguellue"
