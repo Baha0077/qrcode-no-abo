@@ -1372,17 +1372,18 @@ export default function App() {
   const extractPlaceId = (input: string): string => {
     // Direct Place ID (starts with ChIJ or similar)
     if (/^ChIJ/.test(input.trim())) {
-      return input.trim();
+      return 'place:' + input.trim();
     }
     // Try to find place_id in URL parameters
     const placeIdMatch = input.match(/place_id[=:]([A-Za-z0-9_-]+)/);
-    if (placeIdMatch) return placeIdMatch[1];
-    // Try data= parameter format from Maps URLs
-    const dataMatch = input.match(/!1s(0x[0-9a-f]+:[0-9a-fx]+)/i);
-    if (dataMatch) return dataMatch[1];
-    // CID format
-    const cidMatch = input.match(/cid=(\d+)/);
-    if (cidMatch) return cidMatch[1];
+    if (placeIdMatch) return 'place:' + placeIdMatch[1];
+    // Try data= parameter format from Maps URLs (hex format = Place ID)
+    const dataMatch = input.match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i);
+    if (dataMatch) return 'place:' + dataMatch[1];
+    // Google Maps short link or full URL - use directly
+    if (input.match(/google\.(com|de)\/maps|maps\.app\.goo\.gl|g\.co\/maps/i)) {
+      return 'url:' + input.trim();
+    }
     return '';
   };
 
@@ -1440,10 +1441,13 @@ export default function App() {
       case 'twitter':
         return twitterUser ? `https://x.com/${twitterUser.replace('@', '')}` : '';
       case 'google-review': {
-        if (googlePlaceId) {
-          return `https://search.google.com/local/writereview?placeid=${googlePlaceId}`;
+        if (googlePlaceId.startsWith('place:')) {
+          return `https://search.google.com/local/writereview?placeid=${googlePlaceId.slice(6)}`;
         }
-        // If no Place ID extracted, use the raw input as URL (user might paste review link directly)
+        if (googlePlaceId.startsWith('url:')) {
+          return googlePlaceId.slice(4);
+        }
+        // Fallback: use raw input as URL
         if (googleInput.startsWith('http')) {
           return googleInput;
         }
@@ -2202,9 +2206,12 @@ export default function App() {
             {googlePlaceId && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800 font-medium">{t.googlePlaceFound}</p>
-                <p className="text-xs text-green-600 font-mono mt-1">{googlePlaceId}</p>
                 <p className="text-xs text-green-700 mt-2">
-                  Bewertungslink: <span className="font-mono">https://search.google.com/local/writereview?placeid={googlePlaceId}</span>
+                  {googlePlaceId.startsWith('place:') ? (
+                    <>Bewertungslink: <span className="font-mono">https://search.google.com/local/writereview?placeid={googlePlaceId.slice(6)}</span></>
+                  ) : (
+                    <>{t.googleLinkFound}</>
+                  )}
                 </p>
               </div>
             )}
