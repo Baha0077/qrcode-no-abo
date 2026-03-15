@@ -2506,7 +2506,7 @@ export default function App() {
 
       {/* Header */}
       <header className="bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white relative">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2.5 bg-white/15 rounded-xl backdrop-blur-sm">
@@ -2551,6 +2551,31 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* QR-Code Slider Banner */}
+      {!showGenerator && (
+        <div className="bg-gray-900 overflow-hidden py-4">
+          <div className="flex animate-scroll gap-8" style={{ width: 'max-content' }}>
+            {[...Array(3)].map((_, setIdx) => (
+              <div key={setIdx} className="flex gap-8 items-center">
+                {FEATURE_CARDS.map(card => (
+                  <button
+                    key={`${setIdx}-${card.id}`}
+                    onClick={() => openTab(card.id)}
+                    className="flex items-center gap-3 flex-shrink-0 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl px-4 py-2.5 transition-colors cursor-pointer group"
+                  >
+                    <QRCodeSVG value="https://qrcode-no-abo.de" size={32} fgColor="#f87171" bgColor="transparent" level="L" />
+                    <div className="flex items-center gap-1.5">
+                      {card.icon}
+                      <span className="text-gray-300 text-sm font-medium group-hover:text-white whitespace-nowrap">{card.title}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showGenerator ? (
         <>
@@ -2755,7 +2780,7 @@ export default function App() {
               <h3 className="text-lg font-semibold text-gray-900">Angaben gemäß § 5 DDG</h3>
               <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />Deutschland</p>
               <h3 className="text-lg font-semibold text-gray-900">Kontakt:</h3>
-              <p>E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 1659626</p>
+              <p>E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 3700800</p>
               <h3 className="text-lg font-semibold text-gray-900">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:</h3>
               <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen</p>
               <h3 className="text-lg font-semibold text-gray-900">EU-Streitschlichtung</h3>
@@ -2805,7 +2830,7 @@ export default function App() {
               <h3 className="text-lg font-semibold text-gray-900">8. Ihre Rechte</h3>
               <p>Da wir keine personenbezogenen Daten erheben oder speichern, entfallen die üblichen Betroffenenrechte (Auskunft, Löschung, Berichtigung etc.) in Bezug auf diese Website. Sie können sich dennoch jederzeit an uns wenden.</p>
               <h3 className="text-lg font-semibold text-gray-900">9. Verantwortlicher</h3>
-              <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 1659626</p>
+              <p>Bahadir Ergüllü<br />Voisweg 5c<br />40878 Ratingen<br />E-Mail: info@qrcode-no-abo.de<br />Telefon: +49 2102 3700800</p>
             </div>
           </div>
         </div>
@@ -2882,6 +2907,16 @@ export default function App() {
         }
         .animate-slide-up {
           animation: slide-up 0.3s ease-out;
+        }
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.333%); }
+        }
+        .animate-scroll {
+          animation: scroll 30s linear infinite;
+        }
+        .animate-scroll:hover {
+          animation-play-state: paused;
         }
       `}</style>
     </div>
