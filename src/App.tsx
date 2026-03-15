@@ -1435,14 +1435,23 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // QR Code Counter - Global (Cloudflare KV) + Session (local)
+  // QR Code Counter - Global (Cloudflare KV) + Session (local) + Visitors
   const [globalCounter, setGlobalCounter] = useState(0);
   const [sessionCounter, setSessionCounter] = useState(0);
+  const [visitorCount, setVisitorCount] = useState(0);
 
-  // Load global counter on mount and after unlock
+  // Load stats on mount and after unlock + count visitor once per session
   useEffect(() => {
     if (unlocked) {
-      fetch('/api/counter').then(r => r.json()).then(d => setGlobalCounter(d.count)).catch(() => {});
+      fetch('/api/stats').then(r => r.json()).then(d => {
+        setGlobalCounter(d.qrCodes);
+        setVisitorCount(d.visitors);
+      }).catch(() => {});
+      // Count visitor once per session
+      if (!sessionStorage.getItem('qr_visited')) {
+        sessionStorage.setItem('qr_visited', '1');
+        fetch('/api/visitor', { method: 'POST' }).then(r => r.json()).then(d => setVisitorCount(d.count)).catch(() => {});
+      }
     }
   }, [unlocked]);
 
@@ -2882,12 +2891,18 @@ export default function App() {
           </div>
           {/* Kaffee + Counter */}
           <div className="mt-6 pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-500">
-              <span className="font-mono text-red-400 text-sm font-bold">{globalCounter.toLocaleString('de-DE')}</span> {t.qrCodesErstellt}
-              {sessionCounter > 0 && (
-                <span className="text-gray-600 ml-2">({sessionCounter} in dieser Session)</span>
-              )}
-            </p>
+            <div className="text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+              <span>
+                <span className="font-mono text-red-400 text-sm font-bold">{globalCounter.toLocaleString('de-DE')}</span> {t.qrCodesErstellt}
+                {sessionCounter > 0 && (
+                  <span className="text-gray-600 ml-1">({sessionCounter})</span>
+                )}
+              </span>
+              <span className="text-gray-700">·</span>
+              <span>
+                <span className="font-mono text-blue-400 text-sm font-bold">{visitorCount.toLocaleString('de-DE')}</span> Besucher
+              </span>
+            </div>
             <button
               onClick={() => setShowDonate(true)}
               className="inline-flex items-center gap-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-medium px-4 py-2 rounded-full transition-colors text-xs cursor-pointer"
