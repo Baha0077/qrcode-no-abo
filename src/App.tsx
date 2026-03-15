@@ -1217,7 +1217,7 @@ function toWin1252Bytes(str: string): Uint8Array {
 
 // ─── Language Selector Component ─────────────────────────────────────────────
 
-function FeatureCarousel({ cards, onSelect }: { cards: { id: string; title: string; icon: React.ReactNode; description: string }[]; onSelect: (id: string) => void }) {
+function FeatureCarousel({ cards, onSelect }: { cards: { id: TabType; title: string; icon: React.ReactNode; description: string }[]; onSelect: (id: TabType) => void }) {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
