@@ -1306,10 +1306,12 @@ export default function App() {
   const [globalCounter, setGlobalCounter] = useState(0);
   const [sessionCounter, setSessionCounter] = useState(0);
 
-  // Load global counter on mount
+  // Load global counter on mount and after unlock
   useEffect(() => {
-    fetch('/api/counter').then(r => r.json()).then(d => setGlobalCounter(d.count)).catch(() => {});
-  }, []);
+    if (unlocked) {
+      fetch('/api/counter').then(r => r.json()).then(d => setGlobalCounter(d.count)).catch(() => {});
+    }
+  }, [unlocked]);
 
   const incrementCounter = () => {
     setSessionCounter(prev => prev + 1);
