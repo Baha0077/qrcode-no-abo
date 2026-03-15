@@ -113,6 +113,20 @@ const XIcon = ({ large }: { large?: boolean }) => {
   );
 };
 
+// ─── Platform Logos (SVG data URLs for QR code center embedding) ─────────
+
+const SOCIAL_TABS = ['instagram', 'tiktok', 'facebook', 'youtube', 'linkedin', 'twitter', 'whatsapp'] as const;
+
+const PLATFORM_LOGOS: Record<string, string> = {
+  instagram: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="url(#ig)"/><rect x="12" y="12" width="24" height="24" rx="6" stroke="white" stroke-width="2.5" fill="none"/><circle cx="24" cy="24" r="6" stroke="white" stroke-width="2.5" fill="none"/><circle cx="31" cy="17" r="2" fill="white"/><defs><linearGradient id="ig" x1="0" y1="48" x2="48" y2="0"><stop stop-color="#FFC107"/><stop offset=".5" stop-color="#F44336"/><stop offset="1" stop-color="#9C27B0"/></linearGradient></defs></svg>')}`,
+  tiktok: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#000"/><path d="M33 14a7 7 0 01-5-2v14a8 8 0 11-6-7.7v4.2a4 4 0 103 3.8V10h4a7 7 0 005 4z" fill="white"/></svg>')}`,
+  facebook: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#1877F2"/><path d="M29 25l.7-5H25v-3.5c0-1.4.7-2.5 2.6-2.5H30v-4.2s-1.7-.3-3.4-.3c-3.5 0-5.6 2.1-5.6 5.8V20h-4v5h4v12h5V25z" fill="white"/></svg>')}`,
+  youtube: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#FF0000"/><path d="M20 16v16l12-8z" fill="white"/></svg>')}`,
+  linkedin: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0A66C2"/><path d="M16 20h4v14h-4zM18 14a2.5 2.5 0 110 5 2.5 2.5 0 010-5M24 20h4v2c.8-1.2 2.4-2.5 4.5-2.5 4 0 5.5 2.5 5.5 6.5V34h-4v-7c0-2-.5-3.5-2.5-3.5S28 25 28 27v7h-4z" fill="white"/></svg>')}`,
+  twitter: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#000"/><path d="M28 15h4l-7 8 8 12h-6l-5-7-6 7h-4l8-9-8-11h6l4.5 6.5z" fill="white"/></svg>')}`,
+  whatsapp: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#25D366"/><path d="M24 10c-7.7 0-14 6.3-14 14 0 2.5.7 4.8 1.8 6.8L10 38l7.5-1.7c2 1 4.2 1.7 6.5 1.7 7.7 0 14-6.3 14-14s-6.3-14-14-14zm0 25c-2 0-4-.6-5.7-1.5l-4 1 1-3.8C14.4 29 13.7 27 13.7 24c0-5.7 4.6-10.3 10.3-10.3S34.3 18.3 34.3 24 29.7 35 24 35z" fill="white"/></svg>')}`,
+};
+
 // FAQ_DATA is now generated from translations - see getFaqData() inside App component
 
 // ─── Structured Data (hardcoded in German for SEO) ────────
@@ -1407,6 +1421,12 @@ export default function App() {
   const openTab = (tab: TabType) => {
     setActiveTab(tab);
     setShowGenerator(true);
+    // Auto-enable platform logo for social tabs
+    if ((SOCIAL_TABS as readonly string[]).includes(tab) && PLATFORM_LOGOS[tab]) {
+      setUsePlatformLogo(true);
+      setUseLogo(false);
+      setCustomLogo(null);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1433,6 +1453,7 @@ export default function App() {
   const [qrColor, setQrColor] = useState('#000000');
   const [customLogo, setCustomLogo] = useState<string | null>(null);
   const [useLogo, setUseLogo] = useState(false);
+  const [usePlatformLogo, setUsePlatformLogo] = useState(true);
   const [logoSize, setLogoSize] = useState(22); // % of QR code size
   const qrRef = useRef<HTMLDivElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -1571,7 +1592,12 @@ export default function App() {
 
   const qrValue = getQrValue();
   const hasQrValue = qrValue.length > 0;
-  const logoSrc = useLogo ? customLogo : null;
+  const isSocialTab = (SOCIAL_TABS as readonly string[]).includes(activeTab);
+  const logoSrc = useLogo && customLogo
+    ? customLogo
+    : (isSocialTab && usePlatformLogo && PLATFORM_LOGOS[activeTab])
+      ? PLATFORM_LOGOS[activeTab]
+      : null;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -1590,6 +1616,7 @@ export default function App() {
       const dataUrl = ev.target?.result as string;
       setCustomLogo(dataUrl);
       setUseLogo(true);
+      setUsePlatformLogo(false);
     };
     reader.readAsDataURL(file);
   };
@@ -1869,6 +1896,19 @@ export default function App() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{t.logoMitte}</label>
               <div className="space-y-2">
+                {isSocialTab && PLATFORM_LOGOS[activeTab] && (
+                  <button
+                    onClick={() => { setUsePlatformLogo(true); setUseLogo(false); setCustomLogo(null); }}
+                    className={`w-full py-2.5 px-3 rounded-lg border text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+                      usePlatformLogo && !useLogo
+                        ? 'border-red-500 bg-red-50 text-red-700 font-medium'
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <img src={PLATFORM_LOGOS[activeTab]} alt="" className="w-5 h-5 rounded" />
+                    {FEATURE_CARDS.find(c => c.id === activeTab)?.title} Logo
+                  </button>
+                )}
                 <button
                   onClick={() => logoInputRef.current?.click()}
                   className={`w-full py-2 px-3 rounded-lg border text-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
@@ -1900,16 +1940,16 @@ export default function App() {
                   </div>
                 )}
                 <button
-                  onClick={() => { setUseLogo(false); setCustomLogo(null); }}
+                  onClick={() => { setUseLogo(false); setCustomLogo(null); setUsePlatformLogo(false); }}
                   className={`w-full py-2 px-3 rounded-lg border text-sm transition-colors cursor-pointer ${
-                    !useLogo
+                    !useLogo && !usePlatformLogo
                       ? 'border-red-500 bg-red-50 text-red-700 font-medium'
                       : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   {t.keinLogo}
                 </button>
-                {useLogo && customLogo && (
+                {logoSrc && (
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Logo-Größe: {logoSize}%</label>
                     <input
