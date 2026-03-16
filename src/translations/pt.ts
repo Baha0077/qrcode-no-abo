@@ -32,7 +32,7 @@ export const pt: Translations = {
   qrFarbe: 'Cor do QR Code', logoMitte: 'Logo no centro', eigenesLogo: 'Enviar logo pr\u00f3prio',
   keinLogo: 'Sem logo', logoAktiv: 'Logo ativo',
   pngDownload: 'Baixar PNG', svgDownload: 'Baixar SVG (Vetor)', epsDownload: 'Baixar EPS (Impress\u00e3o)',
-  jpegDownload: 'Baixar JPEG (25mm, 300 DPI)', pngMitRahmen: 'Baixar PNG (com moldura)',
+  jpegDownload: 'Baixar JPEG ()', pngMitRahmen: 'Baixar PNG (com moldura)',
   svgMitRahmen: 'Baixar SVG (com moldura)', vcfExport: 'Exportar VCF',
   vcardKopieren: 'Copiar vCard', vcardAnzeigen: 'Mostrar dados vCard',
   farbeWaehlen: 'Escolher cor', farbton: 'Matiz', saettigung: 'Satura\u00e7\u00e3o', helligkeit: 'Brilho',

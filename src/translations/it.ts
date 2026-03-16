@@ -64,7 +64,7 @@ export const it: Translations = {
   pngDownload: 'Scarica PNG',
   svgDownload: 'Scarica SVG (Vettoriale)',
   epsDownload: 'Scarica EPS (Stampa)',
-  jpegDownload: 'Scarica JPEG (25mm, 300 DPI)',
+  jpegDownload: 'Scarica JPEG ()',
   pngMitRahmen: 'Scarica PNG (con cornice)',
   svgMitRahmen: 'Scarica SVG (con cornice)',
   vcfExport: 'Esporta VCF',

@@ -31,7 +31,7 @@ export const nl: Translations = {
   qrFarbe: 'QR-code Kleur', logoMitte: 'Logo in het midden', eigenesLogo: 'Eigen logo uploaden',
   keinLogo: 'Geen logo', logoAktiv: 'Logo actief',
   pngDownload: 'PNG downloaden', svgDownload: 'SVG downloaden (Vector)', epsDownload: 'EPS downloaden (Print)',
-  jpegDownload: 'JPEG downloaden (25mm, 300 DPI)', pngMitRahmen: 'PNG downloaden (met kader)',
+  jpegDownload: 'JPEG downloaden', pngMitRahmen: 'PNG downloaden (met kader)',
   svgMitRahmen: 'SVG downloaden (met kader)', vcfExport: 'VCF exporteren',
   vcardKopieren: 'vCard kopi\u00ebren', vcardAnzeigen: 'vCard-gegevens tonen',
   farbeWaehlen: 'Kleur kiezen', farbton: 'Tint', saettigung: 'Verzadiging', helligkeit: 'Helderheid',

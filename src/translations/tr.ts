@@ -31,7 +31,7 @@ export const tr: Translations = {
   qrFarbe: 'QR Kod Rengi', logoMitte: 'Ortada Logo', eigenesLogo: '\u00d6zel logo y\u00fckle',
   keinLogo: 'Logo yok', logoAktiv: 'Logo aktif',
   pngDownload: 'PNG \u0130ndir', svgDownload: 'SVG \u0130ndir (Vekt\u00f6r)', epsDownload: 'EPS \u0130ndir (Bask\u0131)',
-  jpegDownload: 'JPEG \u0130ndir (25mm, 300 DPI)', pngMitRahmen: 'PNG \u0130ndir (\u00e7er\u00e7eveli)',
+  jpegDownload: 'JPEG \u0130ndir ()', pngMitRahmen: 'PNG \u0130ndir (\u00e7er\u00e7eveli)',
   svgMitRahmen: 'SVG \u0130ndir (\u00e7er\u00e7eveli)', vcfExport: 'VCF D\u0131\u015fa Aktar',
   vcardKopieren: 'vCard Kopyala', vcardAnzeigen: 'vCard verilerini g\u00f6ster',
   farbeWaehlen: 'Renk se\u00e7', farbton: 'Ton', saettigung: 'Doygunluk', helligkeit: 'Parlakl\u0131k',

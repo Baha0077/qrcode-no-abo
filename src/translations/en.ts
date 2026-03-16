@@ -70,7 +70,7 @@ export const en: Translations = {
   pngDownload: 'Download PNG',
   svgDownload: 'Download SVG (Vector)',
   epsDownload: 'Download EPS (Print)',
-  jpegDownload: 'Download JPEG (25mm, 300 DPI)',
+  jpegDownload: 'Download JPEG',
   pngMitRahmen: 'Download PNG (with frame)',
   svgMitRahmen: 'Download SVG (with frame)',
   vcfExport: 'Export VCF',

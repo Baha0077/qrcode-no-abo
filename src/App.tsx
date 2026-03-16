@@ -1130,15 +1130,13 @@ grestore`;
   URL.revokeObjectURL(url);
 }
 
-function handleDownloadJPEG(ref: React.RefObject<HTMLDivElement | null>, filename: string) {
+function handleDownloadJPEG(ref: React.RefObject<HTMLDivElement | null>, filename: string, sizeCm: number, dpi: number) {
   const container = ref.current;
   if (!container) return;
   const svgs = container.querySelectorAll('svg');
   const svgElement = svgs.length > 1 ? svgs[svgs.length - 1] : svgs[0];
   if (!svgElement) return;
-  const sizeMm = 25;
-  const dpi = 300;
-  const basePx = Math.round(sizeMm / 25.4 * dpi);
+  const basePx = Math.round(sizeCm * dpi / 2.54);
   const viewBox = svgElement.getAttribute('viewBox');
   let modules = 33;
   if (viewBox) {
@@ -1744,7 +1742,7 @@ export default function App() {
             {t.epsDownload}
           </button>
           <button
-            onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${prefix}-25mm-300dpi.jpg`); }}
+            onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${prefix}-${qrSizeCm}cm-${qrDpi}dpi.jpg`, qrSizeCm, qrDpi); }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors cursor-pointer font-medium"
           >
             <Download className="w-4 h-4" />
@@ -1778,7 +1776,7 @@ export default function App() {
           {t.epsDownload}
         </button>
         <button
-          onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${prefix}-${selectedFrame}-25mm-300dpi.jpg`); }}
+          onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${prefix}-${selectedFrame}-${qrSizeCm}cm-${qrDpi}dpi.jpg`, qrSizeCm, qrDpi); }}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors cursor-pointer font-medium"
         >
           <Download className="w-4 h-4" />

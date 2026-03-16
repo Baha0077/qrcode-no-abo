@@ -77,7 +77,7 @@ export const de: Translations = {
   pngDownload: 'PNG herunterladen',
   svgDownload: 'SVG herunterladen (Vektor)',
   epsDownload: 'EPS herunterladen (Druck)',
-  jpegDownload: 'JPEG herunterladen (25mm, 300 DPI)',
+  jpegDownload: 'JPEG herunterladen',
   pngMitRahmen: 'PNG herunterladen (mit Rahmen)',
   svgMitRahmen: 'SVG herunterladen (mit Rahmen)',
   vcfExport: 'VCF exportieren',

@@ -31,7 +31,7 @@ export const pl: Translations = {
   qrFarbe: 'Kolor kodu QR', logoMitte: 'Logo na \u015brodku', eigenesLogo: 'Prze\u015blij w\u0142asne logo',
   keinLogo: 'Bez logo', logoAktiv: 'Logo aktywne',
   pngDownload: 'Pobierz PNG', svgDownload: 'Pobierz SVG (Wektor)', epsDownload: 'Pobierz EPS (Druk)',
-  jpegDownload: 'Pobierz JPEG (25mm, 300 DPI)', pngMitRahmen: 'Pobierz PNG (z ramk\u0105)',
+  jpegDownload: 'Pobierz JPEG ()', pngMitRahmen: 'Pobierz PNG (z ramk\u0105)',
   svgMitRahmen: 'Pobierz SVG (z ramk\u0105)', vcfExport: 'Eksportuj VCF',
   vcardKopieren: 'Kopiuj vCard', vcardAnzeigen: 'Poka\u017c dane vCard',
   farbeWaehlen: 'Wybierz kolor', farbton: 'Odcie\u0144', saettigung: 'Nasycenie', helligkeit: 'Jasno\u015b\u0107',
