@@ -115,7 +115,7 @@ const XIcon = ({ large }: { large?: boolean }) => {
 
 // ─── Platform Logos (SVG data URLs for QR code center embedding) ─────────
 
-const SOCIAL_TABS = ['instagram', 'tiktok', 'facebook', 'youtube', 'linkedin', 'twitter', 'whatsapp', 'google-review', 'telefon', 'email', 'sms', 'wifi'] as const;
+const SOCIAL_TABS = ['instagram', 'tiktok', 'facebook', 'youtube', 'linkedin', 'twitter', 'whatsapp', 'google-review', 'telefon', 'email', 'sms', 'wifi', 'link'] as const;
 
 const PLATFORM_LOGOS: Record<string, string> = {
   instagram: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="url(#ig)"/><rect x="12" y="12" width="24" height="24" rx="6" stroke="white" stroke-width="2.5" fill="none"/><circle cx="24" cy="24" r="6" stroke="white" stroke-width="2.5" fill="none"/><circle cx="31" cy="17" r="2" fill="white"/><defs><linearGradient id="ig" x1="0" y1="48" x2="48" y2="0"><stop stop-color="#FFC107"/><stop offset=".5" stop-color="#F44336"/><stop offset="1" stop-color="#9C27B0"/></linearGradient></defs></svg>')}`,
@@ -130,6 +130,7 @@ const PLATFORM_LOGOS: Record<string, string> = {
   email: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#dc2626"/><path d="M12 16l12 8 12-8v16H12z" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 16l12 8 12-8" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>')}`,
   sms: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#7c3aed"/><rect x="10" y="12" width="28" height="20" rx="4" fill="none" stroke="white" stroke-width="2.5"/><path d="M18 36l4-4" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/><circle cx="19" cy="22" r="2" fill="white"/><circle cx="24" cy="22" r="2" fill="white"/><circle cx="29" cy="22" r="2" fill="white"/></svg>')}`,
   wifi: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0284c7"/><path d="M10 20c7.7-6 20.3-6 28 0" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/><path d="M15 25c5.1-4 12.9-4 18 0" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/><path d="M20 30c2.6-2 5.4-2 8 0" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="35" r="2" fill="white"/></svg>')}`,
+  link: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#2563eb"/><circle cx="24" cy="24" r="12" fill="none" stroke="white" stroke-width="2.5"/><path d="M12 24h24M24 12c-4 4-4 20 0 24M24 12c4 4 4 20 0 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M13 18h22M13 30h22" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>')}`,
 };
 
 // FAQ_DATA is now generated from translations - see getFaqData() inside App component
@@ -1412,10 +1413,6 @@ export default function App() {
     { question: t.faq9q, answer: t.faq9a },
   ];
 
-  // Testphase Passwortschutz
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('qr_unlocked') === '1');
-  const [pwInput, setPwInput] = useState('');
-
   const [activeTab, setActiveTab] = useState<TabType>('visitenkarte');
   const [showGenerator, setShowGenerator] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -1432,6 +1429,7 @@ export default function App() {
       setUseLogo(false);
       setCustomLogo(null);
     }
+    window.history.pushState({ generator: true, tab }, '', `#${tab}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1442,18 +1440,16 @@ export default function App() {
 
   // Load stats on mount and after unlock + count visitor once per session
   useEffect(() => {
-    if (unlocked) {
-      fetch('/api/stats').then(r => r.json()).then(d => {
-        setGlobalCounter(d.qrCodes);
-        setVisitorCount(d.visitors);
-      }).catch(() => {});
-      // Count visitor once per session
-      if (!sessionStorage.getItem('qr_visited')) {
-        sessionStorage.setItem('qr_visited', '1');
-        fetch('/api/visitor', { method: 'POST' }).then(r => r.json()).then(d => setVisitorCount(d.count)).catch(() => {});
-      }
+    fetch('/api/stats').then(r => r.json()).then(d => {
+      setGlobalCounter(d.qrCodes);
+      setVisitorCount(d.visitors);
+    }).catch(() => {});
+    // Count visitor once per session
+    if (!sessionStorage.getItem('qr_visited')) {
+      sessionStorage.setItem('qr_visited', '1');
+      fetch('/api/visitor', { method: 'POST' }).then(r => r.json()).then(d => setVisitorCount(d.count)).catch(() => {});
     }
-  }, [unlocked]);
+  }, []);
 
   const incrementCounter = () => {
     setSessionCounter(prev => prev + 1);
@@ -1709,42 +1705,16 @@ export default function App() {
 
   // ─── Passwortschutz (Testphase) ─────────────────────────────────────────────
 
-  if (!unlocked) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-700 to-rose-600 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
-          <div className="text-4xl mb-4">🔒</div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">{t.testphase}</h1>
-          <p className="text-sm text-gray-500 mb-6">{t.testphaseDesc}</p>
-          <input
-            type="password"
-            value={pwInput}
-            onChange={(e) => setPwInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && pwInput === '54321!') {
-                sessionStorage.setItem('qr_unlocked', '1');
-                setUnlocked(true);
-              }
-            }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none mb-4"
-            placeholder={t.passwort}
-            autoFocus
-          />
-          <button
-            onClick={() => {
-              if (pwInput === '54321!') {
-                sessionStorage.setItem('qr_unlocked', '1');
-                setUnlocked(true);
-              }
-            }}
-            className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-          >
-            {t.zugang}
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // ─── Browser History Support ──────────────────────────────────────────────
+  useEffect(() => {
+    const handlePopState = () => {
+      if (showGenerator) {
+        setShowGenerator(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [showGenerator]);
 
   // ─── Download Buttons Component ──────────────────────────────────────────────
 
@@ -2667,6 +2637,11 @@ export default function App() {
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
       {/* Header */}
+      {/* Beta Banner */}
+      <div className="bg-amber-500 text-amber-950 text-center py-1.5 px-4 text-xs sm:text-sm font-medium">
+        🚧 Beta-Version — Fehler gefunden? Bitte melden an <a href="mailto:info@qrcode-no-abo.de" className="underline font-bold">info@qrcode-no-abo.de</a>
+      </div>
+
       <header className="bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white relative">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
           <div className="flex flex-col items-center text-center">
