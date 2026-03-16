@@ -2643,9 +2643,9 @@ export default function App() {
       </div>
 
       <header className="bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white relative">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 sm:py-5">
           <div className="flex flex-col items-center text-center">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-1">
               <div className="p-2.5 bg-white/15 rounded-xl backdrop-blur-sm">
                 <QrCode className="w-8 h-8 sm:w-10 sm:h-10" />
               </div>
@@ -2653,12 +2653,12 @@ export default function App() {
                 QR-Code Generator
               </h1>
             </div>
-            <p className="text-lg sm:text-xl font-semibold text-white/90 mb-2">
+            <p className="text-base sm:text-lg font-semibold text-white/90 mb-1">
               {t.subtitle}
             </p>
             {!showGenerator && (
               <>
-                <p className="text-sm sm:text-base text-white/75 max-w-xl mb-3">
+                <p className="text-xs sm:text-sm text-white/75 max-w-xl mb-1">
                   {t.headerDesc}
                 </p>
                 {globalCounter > 0 && (
