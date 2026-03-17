@@ -4,7 +4,7 @@ import {
   QrCode, Download, Copy, User, Mail, Phone, Building, MapPin,
   Globe, Linkedin, FileText, Link, Upload, X, Shield, Smartphone,
   CheckCircle2, Zap, Lock, FileDown, FileUp, Wifi, MessageSquare,
-  ChevronDown, ArrowLeft, Coffee, MessageCircle, Palette
+  ChevronDown, ArrowLeft, Coffee, MessageCircle, Palette, AlertTriangle
 } from 'lucide-react';
 import { LANGUAGES, LangCode } from './i18n';
 import { translations } from './translations';
@@ -1222,6 +1222,41 @@ function generateOutlookVCard(data: BusinessCardData): string {
   return lines.join('\r\n');
 }
 
+function generateCompactVCard(data: BusinessCardData): string {
+  return [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    data.vorname || data.nachname ? `N:${data.nachname};${data.vorname};;;` : '',
+    data.vorname || data.nachname ? `FN:${data.vorname} ${data.nachname}`.trim() : '',
+    data.firma ? `ORG:${data.firma}` : '',
+    data.telefon ? `TEL;TYPE=WORK,VOICE:${data.telefon}` : (data.mobil ? `TEL;TYPE=CELL:${data.mobil}` : ''),
+    data.email ? `EMAIL;TYPE=INTERNET:${data.email}` : '',
+    'END:VCARD'
+  ].filter(line => line !== '').join('\n');
+}
+
+// ─── QR Version Estimation ──────────────────────────────────────────────────
+
+const QR_CAPACITIES: Record<string, number[]> = {
+  L: [17, 32, 53, 78, 106, 134, 154, 192, 230, 271, 321, 367, 425, 458, 520, 586, 644, 718, 792, 858],
+  M: [14, 26, 42, 62, 84, 106, 122, 152, 180, 213, 251, 287, 331, 362, 412, 450, 504, 560, 624, 666],
+  Q: [11, 20, 32, 46, 60, 74, 86, 108, 130, 151, 177, 203, 241, 258, 292, 322, 364, 394, 442, 482],
+  H: [7, 14, 24, 34, 44, 58, 64, 84, 98, 119, 137, 155, 177, 194, 220, 250, 280, 310, 338, 382],
+};
+
+function estimateQrVersion(dataLength: number, level: string): number {
+  const caps = QR_CAPACITIES[level] || QR_CAPACITIES['M'];
+  for (let i = 0; i < caps.length; i++) {
+    if (dataLength <= caps[i]) return i + 1;
+  }
+  return caps.length + 1;
+}
+
+function getMinPrintSizeCm(version: number): number {
+  const modules = 4 * version + 17 + 8;
+  return Math.ceil(modules * 0.076 * 10) / 10;
+}
+
 function toWin1252Bytes(str: string): Uint8Array {
   const bytes: number[] = [];
   for (let i = 0; i < str.length; i++) {
@@ -1475,6 +1510,7 @@ export default function App() {
 
   // Visitenkarte tab state
   const [formData, setFormData] = useState<BusinessCardData>({ ...EMPTY_FORM });
+  const [compactVCard, setCompactVCard] = useState(false);
 
   // WiFi tab state
   const [wifiSsid, setWifiSsid] = useState('');
@@ -1537,6 +1573,7 @@ export default function App() {
   const printPx = Math.round(qrSizeCm * qrDpi / 2.54);
   const previewPx = 256;
   const vCardData = generateVCard(formData);
+  const compactVCardData = generateCompactVCard(formData);
   const hasData = Object.values(formData).some(v => v !== '');
 
   // Compute QR value based on active tab
@@ -1545,7 +1582,7 @@ export default function App() {
       case 'link':
         return linkUrl || '';
       case 'visitenkarte':
-        return hasData ? vCardData : '';
+        return hasData ? (compactVCard ? compactVCardData : vCardData) : '';
       case 'wifi':
         return wifiSsid ? `WIFI:T:${wifiEncryption};S:${wifiSsid};P:${wifiPassword};;` : '';
       case 'email': {
@@ -1606,6 +1643,12 @@ export default function App() {
     : (isSocialTab && usePlatformLogo && PLATFORM_LOGOS[activeTab])
       ? PLATFORM_LOGOS[activeTab]
       : null;
+
+  // QR version & minimum print size estimation
+  const qrLevel = logoSrc ? 'Q' : 'M';
+  const qrVersion = estimateQrVersion(qrValue.length, qrLevel);
+  const qrModules = 4 * qrVersion + 17 + 8;
+  const minPrintSizeCm = getMinPrintSizeCm(qrVersion);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -1827,6 +1870,12 @@ export default function App() {
               />
             </div>
 
+            {hasQrValue && (
+              <div className="text-center text-xs text-gray-500">
+                {qrValue.length} {t.zeichen} · Version {qrVersion} · {qrModules} {t.module}
+              </div>
+            )}
+
             <FrameSelector
               selectedFrame={selectedFrame}
               setSelectedFrame={setSelectedFrame}
@@ -1848,9 +1897,24 @@ export default function App() {
                   className="w-full accent-red-600"
                 />
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>2 cm</span><span>15 cm</span>
+                  <span>2 cm</span>
+                  {hasQrValue && <span className={qrSizeCm < minPrintSizeCm ? 'text-amber-600 font-medium' : 'text-green-600'}>
+                    {t.empfohlen}: &ge; {minPrintSizeCm.toFixed(1)} cm
+                  </span>}
+                  <span>15 cm</span>
                 </div>
               </div>
+
+              {qrSizeCm < minPrintSizeCm && hasQrValue && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-800">
+                    <p className="font-medium">{t.qrZuKlein}</p>
+                    <p className="mt-1">{t.qrMindestgroesse.replace('{size}', minPrintSizeCm.toFixed(1))}</p>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t.aufloesung}</label>
                 <div className="flex gap-2">
@@ -2412,6 +2476,21 @@ export default function App() {
                 />
               </div>
             </div>
+
+            {activeTab === 'visitenkarte' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={compactVCard}
+                    onChange={(e) => setCompactVCard(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-blue-800">{t.kompaktModus}</span>
+                </label>
+                <p className="text-xs text-blue-600 mt-1">{t.kompaktModusDesc}</p>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

@@ -54,4 +54,13 @@ export const cs: Translations = {
   toastJsonError: 'Chyba: neplatn\u00fd JSON soubor', felderLeeren: 'Vymazat pole',
   optionalLabel: 'voliteln\u00e9', netzwerkname: 'N\u00e1zev s\u00edt\u011b (SSID)',
   waLandesvorwahl: 'Nap\u0159. +420 pro \u010cR',
+
+  // QR Size warnings
+  qrZuKlein: 'QR code may be too small to scan!',
+  qrMindestgroesse: 'For this amount of data, we recommend at least {size} cm print size.',
+  empfohlen: 'Recommended',
+  kompaktModus: 'Compact mode (for business cards)',
+  kompaktModusDesc: 'Reduces data to name, phone, email and company. Ideal for small QR codes on business cards.',
+  zeichen: 'characters',
+  module: 'modules',
 };

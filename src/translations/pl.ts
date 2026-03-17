@@ -101,4 +101,13 @@ export const pl: Translations = {
   faq8a: 'Minimum 2 x 2 cm. Dla lepszej skanowalno\u015bci zalecamy 3-5 cm. Generator automatycznie oblicza optymaln\u0105 rozdzielczo\u015b\u0107.',
   faq9q: 'Jak stworzy\u0107 kod QR dla opinii Google?',
   faq9a: 'Wyszukaj swoj\u0105 firm\u0119 w Google Maps, kliknij "Udost\u0119pnij" i skopiuj link. Wklej ten link w zak\u0142adce "Opinia Google". Kod QR skieruje klient\u00f3w bezpo\u015brednio na stron\u0119 opinii Twojej firmy.',
+
+  // QR Size warnings
+  qrZuKlein: 'QR code may be too small to scan!',
+  qrMindestgroesse: 'For this amount of data, we recommend at least {size} cm print size.',
+  empfohlen: 'Recommended',
+  kompaktModus: 'Compact mode (for business cards)',
+  kompaktModusDesc: 'Reduces data to name, phone, email and company. Ideal for small QR codes on business cards.',
+  zeichen: 'characters',
+  module: 'modules',
 };

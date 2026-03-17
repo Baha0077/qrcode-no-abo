@@ -213,4 +213,13 @@ export const es: Translations = {
   faq8a: 'M\u00ednimo 2 x 2 cm. Para mejor legibilidad, recomendamos 3-5 cm. El generador calcula autom\u00e1ticamente la resoluci\u00f3n \u00f3ptima.',
   faq9q: '\u00bfC\u00f3mo creo un QR para rese\u00f1as de Google?',
   faq9a: 'Busca tu negocio en Google Maps, haz clic en "Compartir" y copia el enlace. Pega este enlace en la pesta\u00f1a "Rese\u00f1a Google". El QR dirigir\u00e1 a los clientes directamente a la p\u00e1gina de rese\u00f1as de tu empresa.',
+
+  // QR Size warnings
+  qrZuKlein: 'QR code may be too small to scan!',
+  qrMindestgroesse: 'For this amount of data, we recommend at least {size} cm print size.',
+  empfohlen: 'Recommended',
+  kompaktModus: 'Compact mode (for business cards)',
+  kompaktModusDesc: 'Reduces data to name, phone, email and company. Ideal for small QR codes on business cards.',
+  zeichen: 'characters',
+  module: 'modules',
 };

@@ -213,4 +213,13 @@ export const fr: Translations = {
   faq8a: 'Au moins 2 x 2 cm. Pour une meilleure lisibilit\u00e9, nous recommandons 3-5 cm. Le g\u00e9n\u00e9rateur calcule automatiquement la r\u00e9solution optimale.',
   faq9q: 'Comment cr\u00e9er un QR code pour les avis Google ?',
   faq9a: 'Recherchez votre entreprise sur Google Maps, cliquez sur "Partager" et copiez le lien. Collez ce lien dans l\'onglet "Avis Google". Le QR code dirigera les clients directement vers la page d\'avis de votre entreprise.',
+
+  // QR Size warnings
+  qrZuKlein: 'QR code may be too small to scan!',
+  qrMindestgroesse: 'For this amount of data, we recommend at least {size} cm print size.',
+  empfohlen: 'Recommended',
+  kompaktModus: 'Compact mode (for business cards)',
+  kompaktModusDesc: 'Reduces data to name, phone, email and company. Ideal for small QR codes on business cards.',
+  zeichen: 'characters',
+  module: 'modules',
 };

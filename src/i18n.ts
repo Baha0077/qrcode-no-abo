@@ -255,4 +255,13 @@ export interface Translations {
   faq7q: string; faq7a: string;
   faq8q: string; faq8a: string;
   faq9q: string; faq9a: string;
+
+  // QR Size warnings
+  qrZuKlein: string;
+  qrMindestgroesse: string;
+  empfohlen: string;
+  kompaktModus: string;
+  kompaktModusDesc: string;
+  zeichen: string;
+  module: string;
 }

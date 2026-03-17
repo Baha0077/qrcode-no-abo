@@ -101,4 +101,13 @@ export const tr: Translations = {
   faq8a: 'En az 2 x 2 cm. Daha iyi taranabilirlik i\u00e7in 3-5 cm \u00f6neriyoruz. Olu\u015fturucu en uygun \u00e7\u00f6z\u00fcn\u00fcrl\u00fc\u011f\u00fc otomatik hesaplar.',
   faq9q: 'Google De\u011ferlendirmeleri i\u00e7in QR kodu nas\u0131l olu\u015ftururum?',
   faq9a: 'Google Maps\'te i\u015fletmenizi aray\u0131n, "Payla\u015f" \u00fczerine t\u0131klay\u0131n ve linki kopyalay\u0131n. Bu linki "Google De\u011ferlendirme" sekmesine yap\u0131\u015ft\u0131r\u0131n. QR kod m\u00fc\u015fterileri do\u011frudan i\u015fletmenizin de\u011ferlendirme sayfas\u0131na y\u00f6nlendirecektir.',
+
+  // QR Size warnings
+  qrZuKlein: 'QR code may be too small to scan!',
+  qrMindestgroesse: 'For this amount of data, we recommend at least {size} cm print size.',
+  empfohlen: 'Recommended',
+  kompaktModus: 'Compact mode (for business cards)',
+  kompaktModusDesc: 'Reduces data to name, phone, email and company. Ideal for small QR codes on business cards.',
+  zeichen: 'characters',
+  module: 'modules',
 };

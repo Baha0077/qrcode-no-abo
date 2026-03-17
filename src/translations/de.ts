@@ -234,4 +234,13 @@ export const de: Translations = {
   faq8a: 'Mindestens 2 x 2 cm. F\u00fcr bessere Scanbarkeit empfehlen wir 3-5 cm. Der Generator berechnet die optimale Aufl\u00f6sung automatisch.',
   faq9q: 'Wie erstelle ich einen QR-Code f\u00fcr Google Bewertungen?',
   faq9a: 'Suchen Sie Ihr Gesch\u00e4ft auf Google Maps, klicken Sie auf "Teilen" und kopieren Sie den Link. F\u00fcgen Sie diesen Link im Tab "Google Bewertung" ein. Der QR-Code f\u00fchrt Kunden direkt zur Bewertungsseite Ihres Unternehmens.',
+
+  // QR Size warnings
+  qrZuKlein: 'QR-Code möglicherweise zu klein zum Scannen!',
+  qrMindestgroesse: 'Für diese Datenmenge empfehlen wir mindestens {size} cm Druckgröße.',
+  empfohlen: 'Empfohlen',
+  kompaktModus: 'Kompakt-Modus (für Visitenkarten)',
+  kompaktModusDesc: 'Reduziert die Daten auf Name, Telefon, E-Mail und Firma. Ideal für kleine QR-Codes auf Visitenkarten.',
+  zeichen: 'Zeichen',
+  module: 'Module',
 };

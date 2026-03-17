@@ -101,4 +101,13 @@ export const nl: Translations = {
   faq8a: 'Minimaal 2 x 2 cm. Voor betere scanbaarheid raden we 3-5 cm aan. De generator berekent automatisch de optimale resolutie.',
   faq9q: 'Hoe maak ik een QR-code voor Google Beoordelingen?',
   faq9a: 'Zoek je bedrijf op Google Maps, klik op "Delen" en kopieer de link. Plak deze link in het tabblad "Google Beoordeling". De QR-code leidt klanten direct naar de beoordelingspagina van je bedrijf.',
+
+  // QR Size warnings
+  qrZuKlein: 'QR code may be too small to scan!',
+  qrMindestgroesse: 'For this amount of data, we recommend at least {size} cm print size.',
+  empfohlen: 'Recommended',
+  kompaktModus: 'Compact mode (for business cards)',
+  kompaktModusDesc: 'Reduces data to name, phone, email and company. Ideal for small QR codes on business cards.',
+  zeichen: 'characters',
+  module: 'modules',
 };
