@@ -2520,6 +2520,7 @@ export default function App() {
                   placeholder="Muster GmbH" />
               </div>
 
+              {!compactVCard && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t.position}</label>
                 <input type="text" value={formData.position}
@@ -2527,6 +2528,7 @@ export default function App() {
                   className={inputClass}
                   placeholder="Geschäftsführer" />
               </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
@@ -2538,7 +2540,7 @@ export default function App() {
                   placeholder="max@muster.de" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className={compactVCard ? '' : 'grid grid-cols-2 gap-4'}>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <Phone className="w-4 h-4" /> Telefon
@@ -2548,6 +2550,7 @@ export default function App() {
                     className={inputClass}
                     placeholder="+49 123 456789" />
                 </div>
+                {!compactVCard && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <Smartphone className="w-4 h-4" /> Mobil
@@ -2557,8 +2560,10 @@ export default function App() {
                     className={inputClass}
                     placeholder="+49 170 1234567" />
                 </div>
+                )}
               </div>
 
+              {!compactVCard && (<>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                   <Globe className="w-4 h-4" /> Website
@@ -2616,6 +2621,7 @@ export default function App() {
                   className={`${inputClass} resize-none`}
                   placeholder="Zusätzliche Informationen..." />
               </div>
+              </>)}
 
               <div className="pt-2">
                 <button
