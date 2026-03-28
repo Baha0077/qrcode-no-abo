@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import JsBarcode from 'jsbarcode';
 import {
@@ -53,6 +54,33 @@ const BARCODE_CONFIG: Record<string, { format: string; length: number; alphanume
   code39: { format: 'CODE39', length: 0, alphanumeric: true, checkDigit: false },
   itf14: { format: 'ITF14', length: 13, alphanumeric: false, checkDigit: true },
 };
+
+const ROUTE_MAP: Record<string, TabType> = {
+  '/visitenkarten-qr-code': 'visitenkarte',
+  '/link-qr-code': 'link',
+  '/google-bewertung-qr-code': 'google-review',
+  '/wifi-qr-code': 'wifi',
+  '/email-qr-code': 'email',
+  '/sms-qr-code': 'sms',
+  '/telefon-qr-code': 'telefon',
+  '/whatsapp-qr-code': 'whatsapp',
+  '/instagram-qr-code': 'instagram',
+  '/tiktok-qr-code': 'tiktok',
+  '/facebook-qr-code': 'facebook',
+  '/youtube-qr-code': 'youtube',
+  '/linkedin-qr-code': 'linkedin',
+  '/x-twitter-qr-code': 'twitter',
+  '/ean-13-barcode-generator': 'ean13',
+  '/ean-8-barcode-generator': 'ean8',
+  '/upc-a-barcode-generator': 'upca',
+  '/code-128-barcode-generator': 'code128',
+  '/code-39-barcode-generator': 'code39',
+  '/itf-14-barcode-generator': 'itf14',
+};
+
+const TAB_TO_ROUTE: Record<TabType, string> = Object.fromEntries(
+  Object.entries(ROUTE_MAP).map(([route, tab]) => [tab, route])
+) as Record<TabType, string>;
 
 function calculateEANCheckDigit(digits: string): number {
   const len = digits.length;
@@ -1521,14 +1549,37 @@ export default function App() {
     { question: t.faq9q, answer: t.faq9a },
   ];
 
-  const [activeTab, setActiveTab] = useState<TabType>('visitenkarte');
-  const [showGenerator, setShowGenerator] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const path = window.location.pathname;
+    return ROUTE_MAP[path] || 'visitenkarte';
+  });
+  const [showGenerator, setShowGenerator] = useState(() => {
+    const path = window.location.pathname;
+    return path !== '/' && !!ROUTE_MAP[path];
+  });
   const [toast, setToast] = useState<string | null>(null);
   const [showImpressum, setShowImpressum] = useState(false);
   const [showDatenschutz, setShowDatenschutz] = useState(false);
   const [showDonate, setShowDonate] = useState(false);
 
   const isBarcode = BARCODE_TABS.includes(activeTab as typeof BARCODE_TABS[number]);
+
+  // Sync URL to tab state on URL changes (browser back/forward)
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/') {
+      setShowGenerator(false);
+    } else if (ROUTE_MAP[path]) {
+      setActiveTab(ROUTE_MAP[path]);
+      setShowGenerator(true);
+    } else {
+      // Unknown path → redirect to landing
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname]);
 
   const openTab = (tab: TabType) => {
     setActiveTab(tab);
@@ -1542,7 +1593,7 @@ export default function App() {
       setUseLogo(false);
       setCustomLogo(null);
     }
-    window.history.pushState({ generator: true, tab }, '', `#${tab}`);
+    navigate(TAB_TO_ROUTE[tab] || '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1843,15 +1894,7 @@ export default function App() {
   // ─── Passwortschutz (Testphase) ─────────────────────────────────────────────
 
   // ─── Browser History Support ──────────────────────────────────────────────
-  useEffect(() => {
-    const handlePopState = () => {
-      if (showGenerator) {
-        setShowGenerator(false);
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [showGenerator]);
+  // Handled by react-router-dom (useNavigate/useLocation) - popstate is automatic
 
   // Render barcode when input changes
   useEffect(() => {
@@ -2991,6 +3034,19 @@ export default function App() {
     { id: 'itf14', title: t.tabItf14, icon: <BarcodeIcon className="w-5 h-5 text-gray-700" />, description: t.descItf14, category: 'barcode' },
   ];
 
+  // ─── Dynamic Page Title ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!showGenerator) {
+      document.title = 'QR-Code & Barcode Generator — Kostenlos, ohne Abo | qrcode-no-abo.de';
+    } else {
+      const card = FEATURE_CARDS.find(c => c.id === activeTab);
+      if (card) {
+        const suffix = BARCODE_TABS.includes(activeTab as typeof BARCODE_TABS[number]) ? 'Barcode Generator' : 'QR-Code Generator';
+        document.title = `${card.title} ${suffix} — Kostenlos | qrcode-no-abo.de`;
+      }
+    }
+  }, [showGenerator, activeTab, lang]);
+
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -3068,7 +3124,7 @@ export default function App() {
           <div className="bg-white border-b border-gray-200">
             <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-2">
               <button
-                onClick={() => setShowGenerator(false)}
+                onClick={() => navigate('/')}
                 className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-red-600 transition-colors cursor-pointer font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -3212,7 +3268,7 @@ export default function App() {
                 {FEATURE_CARDS.filter(card => card.id !== activeTab).map(card => (
                   <button
                     key={card.id}
-                    onClick={() => { setActiveTab(card.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    onClick={() => { navigate(TAB_TO_ROUTE[card.id] || '/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     className="bg-white rounded-xl border border-gray-200 p-3 hover:shadow-md hover:border-red-300 transition-all cursor-pointer text-center group"
                   >
                     <div className="flex justify-center mb-2">
