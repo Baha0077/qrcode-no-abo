@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import JsBarcode from 'jsbarcode';
 import {
   QrCode, Download, Copy, User, Mail, Phone, Building, MapPin,
   Globe, Linkedin, FileText, Link, Upload, X, Shield, Smartphone,
   CheckCircle2, Zap, Lock, FileDown, FileUp, Wifi, MessageSquare,
-  ChevronDown, ArrowLeft, Coffee, MessageCircle, Palette, AlertTriangle
+  ChevronDown, ArrowLeft, Coffee, MessageCircle, Palette, AlertTriangle,
+  Search, Info
 } from 'lucide-react';
 import { LANGUAGES, LangCode } from './i18n';
 import { translations } from './translations';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type TabType = 'visitenkarte' | 'link' | 'google-review' | 'wifi' | 'email' | 'sms' | 'telefon' | 'whatsapp' | 'instagram' | 'tiktok' | 'facebook' | 'youtube' | 'linkedin' | 'twitter';
+type TabType = 'visitenkarte' | 'link' | 'google-review' | 'wifi' | 'email' | 'sms' | 'telefon' | 'whatsapp' | 'instagram' | 'tiktok' | 'facebook' | 'youtube' | 'linkedin' | 'twitter' | 'ean13' | 'ean8' | 'upca' | 'code128' | 'code39' | 'itf14';
 
 interface BusinessCardData {
   vorname: string;
@@ -38,6 +40,79 @@ const EMPTY_FORM: BusinessCardData = {
   adresse: '', plz: '', ort: '', linkedin: '', notizen: ''
 };
 
+
+// ─── Barcode Constants & Helpers ──────────────────────────────────────────
+
+const BARCODE_TABS = ['ean13', 'ean8', 'upca', 'code128', 'code39', 'itf14'] as const;
+
+const BARCODE_CONFIG: Record<string, { format: string; length: number; alphanumeric: boolean; checkDigit: boolean }> = {
+  ean13: { format: 'EAN13', length: 12, alphanumeric: false, checkDigit: true },
+  ean8: { format: 'EAN8', length: 7, alphanumeric: false, checkDigit: true },
+  upca: { format: 'UPC', length: 11, alphanumeric: false, checkDigit: true },
+  code128: { format: 'CODE128', length: 0, alphanumeric: true, checkDigit: false },
+  code39: { format: 'CODE39', length: 0, alphanumeric: true, checkDigit: false },
+  itf14: { format: 'ITF14', length: 13, alphanumeric: false, checkDigit: true },
+};
+
+function calculateEANCheckDigit(digits: string): number {
+  const len = digits.length;
+  let sum = 0;
+  for (let i = 0; i < len; i++) {
+    const d = parseInt(digits[i]);
+    sum += d * ((i % 2 === 0) ? 1 : 3);
+  }
+  const remainder = sum % 10;
+  return remainder === 0 ? 0 : 10 - remainder;
+}
+
+function calculateUPCCheckDigit(digits: string): number {
+  let sum = 0;
+  for (let i = 0; i < 11; i++) {
+    const d = parseInt(digits[i]);
+    sum += d * ((i % 2 === 0) ? 3 : 1);
+  }
+  const remainder = sum % 10;
+  return remainder === 0 ? 0 : 10 - remainder;
+}
+
+function getCheckDigitSteps(digits: string, type: string): { multiplied: string[]; sum: number; nextMultiple: number; checkDigit: number } {
+  const multiplied: string[] = [];
+  let sum = 0;
+  const isUPC = type === 'upca';
+
+  for (let i = 0; i < digits.length; i++) {
+    const d = parseInt(digits[i]);
+    const weight = isUPC
+      ? ((i % 2 === 0) ? 3 : 1)
+      : ((i % 2 === 0) ? 1 : 3);
+    const product = d * weight;
+    multiplied.push(`${d} × ${weight} = ${product}`);
+    sum += product;
+  }
+
+  const nextMultiple = Math.ceil(sum / 10) * 10;
+  if (nextMultiple === sum) {
+    return { multiplied, sum, nextMultiple: sum + 10, checkDigit: 0 };
+  }
+  return { multiplied, sum, nextMultiple, checkDigit: nextMultiple - sum };
+}
+
+function validateBarcode(input: string, type: string): boolean {
+  const config = BARCODE_CONFIG[type];
+  if (!config || !config.checkDigit) return true;
+  const expectedLength = config.length + 1;
+  if (input.length !== expectedLength) return false;
+  const digits = input.slice(0, -1);
+  const givenCheck = parseInt(input[input.length - 1]);
+  const calculated = type === 'upca' ? calculateUPCCheckDigit(digits) : calculateEANCheckDigit(digits);
+  return givenCheck === calculated;
+}
+
+const BarcodeIcon = ({ className }: { className?: string }) => (
+  <svg className={className || "w-5 h-5"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 5v14" /><path d="M8 5v14" /><path d="M12 5v14" /><path d="M17 5v14" /><path d="M21 5v14" /><path d="M6 5v14" /><path d="M10 5v14" /><path d="M15 5v14" /><path d="M19 5v14" />
+  </svg>
+);
 
 // ─── Brand Icons ──────────────────────────────────────────────────────────
 
@@ -1453,9 +1528,14 @@ export default function App() {
   const [showDatenschutz, setShowDatenschutz] = useState(false);
   const [showDonate, setShowDonate] = useState(false);
 
+  const isBarcode = BARCODE_TABS.includes(activeTab as typeof BARCODE_TABS[number]);
+
   const openTab = (tab: TabType) => {
     setActiveTab(tab);
     setShowGenerator(true);
+    // Reset barcode input when switching
+    setBarcodeInput('');
+    setBarcodeValidateMode(false);
     // Auto-enable platform logo for social tabs
     if ((SOCIAL_TABS as readonly string[]).includes(tab) && PLATFORM_LOGOS[tab]) {
       setUsePlatformLogo(true);
@@ -1540,6 +1620,22 @@ export default function App() {
   const [youtubeChannel, setYoutubeChannel] = useState('');
   const [linkedinUser, setLinkedinUser] = useState('');
   const [twitterUser, setTwitterUser] = useState('');
+
+  // Barcode state
+  const [barcodeInput, setBarcodeInput] = useState('');
+  const [barcodeValidateMode, setBarcodeValidateMode] = useState(false);
+  const [barcodeColor, setBarcodeColor] = useState('#000000');
+  const [barcodeBgColor, setBarcodeBgColor] = useState('#FFFFFF');
+  const [barcodeFontSize, setBarcodeFontSize] = useState<'S' | 'M' | 'L'>('M');
+  const [barcodeHeight, setBarcodeHeight] = useState(100);
+  const [barcodeBarWidth, setBarcodeBarWidth] = useState(2);
+  const [barcodeShowText, setBarcodeShowText] = useState(true);
+  const barcodeRef = useRef<SVGSVGElement>(null);
+  const barcodeCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Filter/Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState<'all' | 'qrcode' | 'barcode'>('all');
 
   // Google Review tab state
   const [googleInput, setGoogleInput] = useState('');
@@ -1756,6 +1852,45 @@ export default function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [showGenerator]);
+
+  // Render barcode when input changes
+  useEffect(() => {
+    if (!isBarcode || !barcodeRef.current) return;
+    const config = BARCODE_CONFIG[activeTab];
+    if (!config) return;
+
+    let value = barcodeInput;
+    if (!value) {
+      while (barcodeRef.current.firstChild) {
+        barcodeRef.current.removeChild(barcodeRef.current.firstChild);
+      }
+      return;
+    }
+
+    // For numeric barcodes, add check digit
+    if (config.checkDigit && !barcodeValidateMode && value.length === config.length) {
+      const checkDigit = activeTab === 'upca' ? calculateUPCCheckDigit(value) : calculateEANCheckDigit(value);
+      value = value + checkDigit;
+    }
+
+    try {
+      JsBarcode(barcodeRef.current, value, {
+        format: config.format,
+        width: barcodeBarWidth,
+        height: barcodeHeight,
+        displayValue: barcodeShowText,
+        fontSize: barcodeFontSize === 'S' ? 14 : barcodeFontSize === 'M' ? 18 : 24,
+        lineColor: barcodeColor,
+        background: barcodeBgColor,
+        margin: 10,
+        flat: true,
+      });
+    } catch {
+      while (barcodeRef.current && barcodeRef.current.firstChild) {
+        barcodeRef.current.removeChild(barcodeRef.current.firstChild);
+      }
+    }
+  }, [barcodeInput, activeTab, barcodeBarWidth, barcodeHeight, barcodeShowText, barcodeFontSize, barcodeColor, barcodeBgColor, barcodeValidateMode, isBarcode]);
 
   // ─── Download Buttons Component ──────────────────────────────────────────────
 
@@ -2444,6 +2579,143 @@ export default function App() {
           </div>
         );
 
+      case 'ean13': case 'ean8': case 'upca': case 'code128': case 'code39': case 'itf14': {
+        const config = BARCODE_CONFIG[activeTab];
+        const isNumeric = !config.alphanumeric;
+        const hasCheckDigit = config.checkDigit;
+        const maxLength = config.length;
+        const currentCheckDigit = hasCheckDigit && barcodeInput.length === maxLength && !barcodeValidateMode
+          ? (activeTab === 'upca' ? calculateUPCCheckDigit(barcodeInput) : calculateEANCheckDigit(barcodeInput))
+          : null;
+        const isValidComplete = hasCheckDigit && barcodeValidateMode && barcodeInput.length === maxLength + 1
+          ? validateBarcode(barcodeInput, activeTab)
+          : null;
+        const steps = hasCheckDigit && barcodeInput.length === maxLength && !barcodeValidateMode
+          ? getCheckDigitSteps(barcodeInput, activeTab)
+          : null;
+
+        return (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <BarcodeIcon className="w-6 h-6 text-gray-700" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">{FEATURE_CARDS.find(c => c.id === activeTab)?.title}</h2>
+                <p className="text-sm text-gray-500">{FEATURE_CARDS.find(c => c.id === activeTab)?.description}</p>
+              </div>
+            </div>
+
+            {/* Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {config.alphanumeric ? t.barcodeFreitext : t.barcodeEingabe}
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={barcodeInput}
+                  onChange={e => {
+                    let val = e.target.value;
+                    if (isNumeric) val = val.replace(/\D/g, '');
+                    const limit = barcodeValidateMode ? maxLength + 1 : (maxLength || 128);
+                    if (val.length <= limit) setBarcodeInput(val);
+                  }}
+                  placeholder={isNumeric ? t.ziffernEingeben : t.barcodeFreitext}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg font-mono focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                  maxLength={barcodeValidateMode ? maxLength + 1 : (maxLength || 128)}
+                />
+                {isNumeric && maxLength > 0 && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-mono">
+                    {barcodeInput.length}/{barcodeValidateMode ? maxLength + 1 : maxLength}
+                  </span>
+                )}
+              </div>
+              {isNumeric && !config.alphanumeric && barcodeInput && !/^\d+$/.test(barcodeInput) && (
+                <p className="text-xs text-red-500 mt-1">{t.nurZiffern}</p>
+              )}
+            </div>
+
+            {/* Check digit display */}
+            {hasCheckDigit && (
+              <div className="space-y-3">
+                {/* Toggle validate mode */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div
+                    onClick={() => { setBarcodeValidateMode(!barcodeValidateMode); setBarcodeInput(''); }}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${barcodeValidateMode ? 'bg-red-600' : 'bg-gray-300'}`}
+                  >
+                    <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${barcodeValidateMode ? 'translate-x-5' : ''}`} />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">{t.kompletteNummer}</span>
+                </label>
+
+                {/* Calculated check digit */}
+                {!barcodeValidateMode && currentCheckDigit !== null && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      <span className="font-medium text-green-800">{t.pruefzifferBerechnet}: </span>
+                      <span className="text-2xl font-bold font-mono text-green-700">{currentCheckDigit}</span>
+                    </div>
+                    <p className="text-sm text-green-700 mt-1 font-mono">
+                      {barcodeInput}<span className="text-green-600 font-bold text-lg">{currentCheckDigit}</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Validation result */}
+                {barcodeValidateMode && isValidComplete !== null && (
+                  <div className={`border rounded-xl p-4 ${isValidComplete ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="flex items-center gap-2">
+                      {isValidComplete ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <AlertTriangle className="w-5 h-5 text-red-600" />
+                      )}
+                      <span className={`font-medium ${isValidComplete ? 'text-green-800' : 'text-red-800'}`}>
+                        {isValidComplete ? t.pruefzifferGueltig : t.pruefzifferUngueltig}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Check digit explanation */}
+                <details className="bg-gray-50 rounded-xl border border-gray-200">
+                  <summary className="p-4 cursor-pointer text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Info className="w-4 h-4" />
+                    {t.pruefzifferErklaerung}
+                  </summary>
+                  <div className="px-4 pb-4 space-y-3">
+                    <p className="text-sm text-gray-600">{t.pruefzifferFormel}</p>
+                    <ol className="text-sm text-gray-600 space-y-1.5 list-decimal list-inside">
+                      <li>{t.pruefzifferSchritt1}</li>
+                      <li>{t.pruefzifferSchritt2}</li>
+                      <li>{t.pruefzifferSchritt3}</li>
+                      <li>{t.pruefzifferSchritt4}</li>
+                    </ol>
+                    {steps && (
+                      <div className="bg-white rounded-lg p-3 border border-gray-200 mt-3">
+                        <p className="text-xs font-semibold text-gray-500 mb-2">{t.barcodeEingabe}: {barcodeInput}</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs font-mono">
+                          {steps.multiplied.map((s, i) => (
+                            <span key={i} className="bg-gray-50 px-2 py-1 rounded">{s}</span>
+                          ))}
+                        </div>
+                        <div className="mt-2 text-sm font-mono space-y-1">
+                          <p>&Sigma; = <span className="font-bold">{steps.sum}</span></p>
+                          <p>&rarr; {steps.nextMultiple} &minus; {steps.sum} = <span className="font-bold text-green-700">{steps.checkDigit}</span></p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </details>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       case 'visitenkarte':
         return (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -2654,6 +2926,12 @@ export default function App() {
       case 'youtube': return `youtube-qr-${youtubeChannel || 'code'}`;
       case 'linkedin': return `linkedin-qr-${linkedinUser || 'code'}`;
       case 'twitter': return `x-qr-${twitterUser || 'code'}`;
+      case 'ean13': return `ean13-barcode`;
+      case 'ean8': return `ean8-barcode`;
+      case 'upca': return `upca-barcode`;
+      case 'code128': return `code128-barcode`;
+      case 'code39': return `code39-barcode`;
+      case 'itf14': return `itf14-barcode`;
     }
   };
 
@@ -2689,21 +2967,28 @@ export default function App() {
 
   // ─── Feature Cards Data ──────────────────────────────────────────────────────
 
-  const FEATURE_CARDS: { id: TabType; title: string; icon: React.ReactNode; description: string; qrValue: string }[] = [
-    { id: 'visitenkarte', title: t.tabVisitenkarte, icon: <User className="w-5 h-5 text-red-600" />, description: t.descVisitenkarte, qrValue: 'BEGIN:VCARD' },
-    { id: 'link', title: t.tabLink, icon: <Link className="w-5 h-5 text-red-600" />, description: t.descLink, qrValue: 'https://qrcode-no-abo.de' },
-    { id: 'google-review', title: t.tabGoogleReview, icon: <GoogleIcon />, description: t.descGoogleReview, qrValue: 'https://google.com/maps' },
-    { id: 'wifi', title: t.tabWifi, icon: <Wifi className="w-5 h-5 text-red-600" />, description: t.descWifi, qrValue: 'WIFI:T:WPA;S:MeinWLAN;;' },
-    { id: 'email', title: t.tabEmail, icon: <Mail className="w-5 h-5 text-red-600" />, description: t.descEmail, qrValue: 'mailto:info@example.de' },
-    { id: 'sms', title: t.tabSms, icon: <MessageSquare className="w-5 h-5 text-red-600" />, description: t.descSms, qrValue: 'smsto:+49123:Hallo' },
-    { id: 'telefon', title: t.tabTelefon, icon: <Phone className="w-5 h-5 text-red-600" />, description: t.descTelefon, qrValue: 'tel:+49123456' },
-    { id: 'whatsapp', title: t.tabWhatsapp, icon: <MessageCircle className="w-5 h-5 text-green-600" />, description: t.descWhatsapp, qrValue: 'https://wa.me/49123' },
-    { id: 'instagram', title: t.tabInstagram, icon: <InstagramIcon />, description: t.descInstagram, qrValue: 'https://instagram.com' },
-    { id: 'tiktok', title: t.tabTiktok, icon: <TikTokIcon />, description: t.descTiktok, qrValue: 'https://tiktok.com' },
-    { id: 'facebook', title: t.tabFacebook, icon: <FacebookIcon />, description: t.descFacebook, qrValue: 'https://facebook.com' },
-    { id: 'youtube', title: t.tabYoutube, icon: <YouTubeIcon />, description: t.descYoutube, qrValue: 'https://youtube.com' },
-    { id: 'linkedin', title: t.tabLinkedin, icon: <LinkedInIcon />, description: t.descLinkedin, qrValue: 'https://linkedin.com' },
-    { id: 'twitter', title: t.tabTwitter, icon: <XIcon />, description: t.descTwitter, qrValue: 'https://x.com' },
+  const FEATURE_CARDS: { id: TabType; title: string; icon: React.ReactNode; description: string; qrValue?: string; category: 'qrcode' | 'barcode' }[] = [
+    { id: 'visitenkarte', title: t.tabVisitenkarte, icon: <User className="w-5 h-5 text-red-600" />, description: t.descVisitenkarte, qrValue: 'BEGIN:VCARD', category: 'qrcode' },
+    { id: 'link', title: t.tabLink, icon: <Link className="w-5 h-5 text-red-600" />, description: t.descLink, qrValue: 'https://qrcode-no-abo.de', category: 'qrcode' },
+    { id: 'google-review', title: t.tabGoogleReview, icon: <GoogleIcon />, description: t.descGoogleReview, qrValue: 'https://google.com/maps', category: 'qrcode' },
+    { id: 'wifi', title: t.tabWifi, icon: <Wifi className="w-5 h-5 text-red-600" />, description: t.descWifi, qrValue: 'WIFI:T:WPA;S:MeinWLAN;;', category: 'qrcode' },
+    { id: 'email', title: t.tabEmail, icon: <Mail className="w-5 h-5 text-red-600" />, description: t.descEmail, qrValue: 'mailto:info@example.de', category: 'qrcode' },
+    { id: 'sms', title: t.tabSms, icon: <MessageSquare className="w-5 h-5 text-red-600" />, description: t.descSms, qrValue: 'smsto:+49123:Hallo', category: 'qrcode' },
+    { id: 'telefon', title: t.tabTelefon, icon: <Phone className="w-5 h-5 text-red-600" />, description: t.descTelefon, qrValue: 'tel:+49123456', category: 'qrcode' },
+    { id: 'whatsapp', title: t.tabWhatsapp, icon: <MessageCircle className="w-5 h-5 text-green-600" />, description: t.descWhatsapp, qrValue: 'https://wa.me/49123', category: 'qrcode' },
+    { id: 'instagram', title: t.tabInstagram, icon: <InstagramIcon />, description: t.descInstagram, qrValue: 'https://instagram.com', category: 'qrcode' },
+    { id: 'tiktok', title: t.tabTiktok, icon: <TikTokIcon />, description: t.descTiktok, qrValue: 'https://tiktok.com', category: 'qrcode' },
+    { id: 'facebook', title: t.tabFacebook, icon: <FacebookIcon />, description: t.descFacebook, qrValue: 'https://facebook.com', category: 'qrcode' },
+    { id: 'youtube', title: t.tabYoutube, icon: <YouTubeIcon />, description: t.descYoutube, qrValue: 'https://youtube.com', category: 'qrcode' },
+    { id: 'linkedin', title: t.tabLinkedin, icon: <LinkedInIcon />, description: t.descLinkedin, qrValue: 'https://linkedin.com', category: 'qrcode' },
+    { id: 'twitter', title: t.tabTwitter, icon: <XIcon />, description: t.descTwitter, qrValue: 'https://x.com', category: 'qrcode' },
+    // Barcode types
+    { id: 'ean13', title: t.tabEan13, icon: <BarcodeIcon className="w-5 h-5 text-gray-700" />, description: t.descEan13, category: 'barcode' },
+    { id: 'ean8', title: t.tabEan8, icon: <BarcodeIcon className="w-5 h-5 text-gray-700" />, description: t.descEan8, category: 'barcode' },
+    { id: 'upca', title: t.tabUpcA, icon: <BarcodeIcon className="w-5 h-5 text-gray-700" />, description: t.descUpcA, category: 'barcode' },
+    { id: 'code128', title: t.tabCode128, icon: <BarcodeIcon className="w-5 h-5 text-gray-700" />, description: t.descCode128, category: 'barcode' },
+    { id: 'code39', title: t.tabCode39, icon: <BarcodeIcon className="w-5 h-5 text-gray-700" />, description: t.descCode39, category: 'barcode' },
+    { id: 'itf14', title: t.tabItf14, icon: <BarcodeIcon className="w-5 h-5 text-gray-700" />, description: t.descItf14, category: 'barcode' },
   ];
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -2796,7 +3081,128 @@ export default function App() {
           <main className="flex-1 max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {renderTabForm()}
-              <QRPreviewPanel prefix={getPrefix()} extra={vcardExtra} />
+              {isBarcode ? (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5">
+                  <h3 className="font-bold text-gray-900">{t.barcodeVorschau}</h3>
+
+                  {/* Barcode Preview */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-center min-h-[200px]">
+                    <svg ref={barcodeRef} />
+                  </div>
+                  <canvas ref={barcodeCanvasRef} className="hidden" />
+
+                  {/* Barcode Settings */}
+                  <div className="space-y-4">
+                    {/* Show text toggle */}
+                    <label className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">{t.textAnzeigen}</span>
+                      <div
+                        onClick={() => setBarcodeShowText(!barcodeShowText)}
+                        className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${barcodeShowText ? 'bg-red-600' : 'bg-gray-300'}`}
+                      >
+                        <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${barcodeShowText ? 'translate-x-5' : ''}`} />
+                      </div>
+                    </label>
+
+                    {/* Height */}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">{t.barcodeHoehe}: {barcodeHeight}px</label>
+                      <input type="range" min={40} max={200} value={barcodeHeight} onChange={e => setBarcodeHeight(Number(e.target.value))} className="w-full mt-1 accent-red-600" />
+                    </div>
+
+                    {/* Bar width */}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">{t.balkenbreite}: {barcodeBarWidth}px</label>
+                      <input type="range" min={1} max={4} step={0.5} value={barcodeBarWidth} onChange={e => setBarcodeBarWidth(Number(e.target.value))} className="w-full mt-1 accent-red-600" />
+                    </div>
+
+                    {/* Font size */}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">{t.schriftgroesse}</label>
+                      <div className="flex gap-2">
+                        {(['S', 'M', 'L'] as const).map(s => (
+                          <button
+                            key={s}
+                            onClick={() => setBarcodeFontSize(s)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors ${barcodeFontSize === s ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Colors */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">{t.balkenfarbe}</label>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={barcodeColor} onChange={e => setBarcodeColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer border border-gray-300" />
+                          <span className="text-xs font-mono text-gray-500">{barcodeColor}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">{t.hintergrundfarbe}</label>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={barcodeBgColor} onChange={e => setBarcodeBgColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer border border-gray-300" />
+                          <span className="text-xs font-mono text-gray-500">{barcodeBgColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Download buttons */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => {
+                        if (!barcodeRef.current) return;
+                        const svgData = new XMLSerializer().serializeToString(barcodeRef.current);
+                        const canvas = document.createElement('canvas');
+                        const img = new Image();
+                        img.onload = () => {
+                          canvas.width = img.width * 2;
+                          canvas.height = img.height * 2;
+                          const ctx = canvas.getContext('2d')!;
+                          ctx.fillStyle = barcodeBgColor;
+                          ctx.fillRect(0, 0, canvas.width, canvas.height);
+                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                          const a = document.createElement('a');
+                          a.download = `${activeTab}-barcode.png`;
+                          a.href = canvas.toDataURL('image/png');
+                          a.click();
+                        };
+                        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                        incrementCounter();
+                      }}
+                      disabled={!barcodeInput}
+                      className="flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Download className="w-4 h-4" />
+                      {t.barcodePng}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!barcodeRef.current) return;
+                        const svgData = new XMLSerializer().serializeToString(barcodeRef.current);
+                        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+                        const a = document.createElement('a');
+                        a.download = `${activeTab}-barcode.svg`;
+                        a.href = URL.createObjectURL(blob);
+                        a.click();
+                        URL.revokeObjectURL(a.href);
+                        incrementCounter();
+                      }}
+                      disabled={!barcodeInput}
+                      className="flex items-center justify-center gap-2 py-3 bg-gray-800 text-white rounded-xl font-medium hover:bg-gray-900 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <FileDown className="w-4 h-4" />
+                      {t.barcodeSvg}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <QRPreviewPanel prefix={getPrefix()} extra={vcardExtra} />
+              )}
             </div>
 
             {/* Other QR Types - Mini Cards */}
@@ -2831,11 +3237,49 @@ export default function App() {
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-2">
               {t.landingTitle}
             </h2>
-            <p className="text-gray-500 text-center mb-8 text-sm sm:text-base">
+            <p className="text-gray-500 text-center mb-6 text-sm sm:text-base">
               {t.landingSubtitle}
             </p>
+
+            {/* Search + Filter */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 mb-8 max-w-xl mx-auto">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder={t.suchePlaceholder}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-white"
+                />
+              </div>
+              <div className="flex rounded-xl border border-gray-300 overflow-hidden bg-white flex-shrink-0">
+                {(['all', 'qrcode', 'barcode'] as const).map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setFilterCategory(cat)}
+                    className={`px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+                      filterCategory === cat
+                        ? 'bg-red-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {cat === 'all' ? t.alleFilter : cat === 'qrcode' ? t.qrcodeFilter : t.barcodeFilter}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {FEATURE_CARDS.map(card => (
+              {FEATURE_CARDS
+                .filter(card => {
+                  const matchesFilter = filterCategory === 'all' || card.category === filterCategory;
+                  const matchesSearch = !searchQuery ||
+                    card.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    card.description.toLowerCase().includes(searchQuery.toLowerCase());
+                  return matchesFilter && matchesSearch;
+                })
+                .map(card => (
                 <button
                   key={card.id}
                   onClick={() => openTab(card.id)}
@@ -2843,12 +3287,32 @@ export default function App() {
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 bg-gray-50 rounded-lg p-2 group-hover:bg-red-50 transition-colors">
-                      <QRCodeSVG value="https://qrcode-no-abo.de" size={56} fgColor="#dc2626" level="L" />
+                      {card.category === 'barcode' ? (
+                        <svg viewBox="0 0 56 56" width="56" height="56">
+                          <rect width="56" height="56" rx="4" fill="#f9fafb"/>
+                          <rect x="6" y="8" width="3" height="32" fill="#dc2626"/>
+                          <rect x="11" y="8" width="2" height="32" fill="#dc2626"/>
+                          <rect x="15" y="8" width="4" height="32" fill="#dc2626"/>
+                          <rect x="21" y="8" width="2" height="32" fill="#dc2626"/>
+                          <rect x="25" y="8" width="3" height="32" fill="#dc2626"/>
+                          <rect x="30" y="8" width="1" height="32" fill="#dc2626"/>
+                          <rect x="33" y="8" width="4" height="32" fill="#dc2626"/>
+                          <rect x="39" y="8" width="2" height="32" fill="#dc2626"/>
+                          <rect x="43" y="8" width="3" height="32" fill="#dc2626"/>
+                          <rect x="48" y="8" width="2" height="32" fill="#dc2626"/>
+                          <text x="28" y="50" textAnchor="middle" fontSize="6" fill="#6b7280" fontFamily="monospace">1234567890</text>
+                        </svg>
+                      ) : (
+                        <QRCodeSVG value="https://qrcode-no-abo.de" size={56} fgColor="#dc2626" level="L" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         {card.icon}
                         <h3 className="font-bold text-gray-900">{card.title}</h3>
+                        {card.category === 'barcode' && (
+                          <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">BARCODE</span>
+                        )}
                       </div>
                       <p className="text-sm text-gray-600">{card.description}</p>
                     </div>
