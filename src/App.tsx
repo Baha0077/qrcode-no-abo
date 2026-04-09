@@ -3061,11 +3061,6 @@ export default function App() {
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      {/* Beta Banner */}
-      <div className="bg-amber-500 text-amber-950 text-center py-1.5 px-4 text-xs sm:text-sm font-medium">
-        🚧 Beta-Version — Fehler gefunden? Bitte melden an <a href="mailto:info@qrcode-no-abo.de" className="underline font-bold">info@qrcode-no-abo.de</a>
-      </div>
-
       <header className="bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white relative">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 sm:py-5">
           <div className="flex flex-col items-center text-center">
@@ -3112,6 +3107,11 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* Beta Banner */}
+      <div className="bg-amber-500 text-amber-950 text-center py-1.5 px-4 text-xs sm:text-sm font-medium">
+        🚧 Beta-Version — Fehler gefunden? Bitte melden an <a href="mailto:info@qrcode-no-abo.de" className="underline font-bold">info@qrcode-no-abo.de</a>
+      </div>
 
       {/* Feature Carousel Banner */}
       {!showGenerator && (
