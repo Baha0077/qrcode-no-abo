@@ -2888,7 +2888,7 @@ export default function App() {
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white relative">
+      <header className={`bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white relative ${!showGenerator ? 'hidden' : ''}`}>
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 sm:py-5">
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-3 mb-1">
@@ -2934,11 +2934,6 @@ export default function App() {
           </div>
         </div>
       </header>
-
-      {/* Feature Carousel Banner */}
-      {!showGenerator && (
-        <FeatureCarousel cards={FEATURE_CARDS} onSelect={openTab} />
-      )}
 
       {showGenerator ? (
         <>
@@ -3460,6 +3455,9 @@ export default function App() {
               ))}
             </div>
           </section>
+
+          {/* Feature Carousel Banner - unter dem Kategorien-Grid */}
+          <FeatureCarousel cards={FEATURE_CARDS} onSelect={openTab} />
 
           {/* Feature Highlights */}
           <section className="bg-white border-t border-b border-gray-200 py-6">
