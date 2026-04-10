@@ -643,12 +643,39 @@ function QRWithFrame({
 
 // ─── Download Helpers for Frames ────────────────────────────────────────────
 
+function drawLogoOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  logoSrc: string,
+  centerX: number,
+  centerY: number,
+  drawSize: number
+): Promise<void> {
+  return new Promise((resolve) => {
+    const logoImg = new Image();
+    logoImg.onload = () => {
+      const padding = drawSize * 0.05;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(
+        centerX - drawSize / 2 - padding,
+        centerY - drawSize / 2 - padding,
+        drawSize + padding * 2,
+        drawSize + padding * 2
+      );
+      ctx.drawImage(logoImg, centerX - drawSize / 2, centerY - drawSize / 2, drawSize, drawSize);
+      resolve();
+    };
+    logoImg.onerror = () => resolve();
+    logoImg.src = logoSrc;
+  });
+}
+
 function handleDownloadFramePNG(
   ref: React.RefObject<HTMLDivElement | null>,
   filename: string,
   scaleFactor: number,
   currentLogoSrc?: string | null,
-  currentLogoSize?: number
+  currentLogoSize?: number,
+  onError?: (msg: string) => void
 ) {
   const container = ref.current;
   if (!container) return;
@@ -713,59 +740,47 @@ function handleDownloadFramePNG(
   const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(svgBlob);
   const img = new Image();
-  img.onload = () => {
+  img.onload = async () => {
     const canvas = document.createElement('canvas');
     canvas.width = pw;
     canvas.height = ph;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) { URL.revokeObjectURL(url); return; }
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, pw, ph);
     ctx.drawImage(img, 0, 0, pw, ph);
 
-    const finalize = () => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const downloadUrl = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.download = filename;
-          link.click();
-          URL.revokeObjectURL(downloadUrl);
-        }
-      }, 'image/png');
-      URL.revokeObjectURL(url);
-    };
-
     // Draw logo on top if present - position it over the QR area
     if (currentLogoSrc && innerQrSvg) {
-      const logoImg = new Image();
-      logoImg.onload = () => {
-        // Find where the QR code is positioned within the frame
-        const foEl = outerSvg.querySelector('foreignObject');
-        const foX = foEl ? parseFloat(foEl.getAttribute('x') || '0') : 0;
-        const foY = foEl ? parseFloat(foEl.getAttribute('y') || '0') : 0;
-        const foW = foEl ? parseFloat(foEl.getAttribute('width') || '256') : 256;
-        const foH = foEl ? parseFloat(foEl.getAttribute('height') || '256') : 256;
+      const foEl = outerSvg.querySelector('foreignObject');
+      const foX = foEl ? parseFloat(foEl.getAttribute('x') || '0') : 0;
+      const foY = foEl ? parseFloat(foEl.getAttribute('y') || '0') : 0;
+      const foW = foEl ? parseFloat(foEl.getAttribute('width') || '256') : 256;
+      const foH = foEl ? parseFloat(foEl.getAttribute('height') || '256') : 256;
 
-        const logoPct = (currentLogoSize || 22) / 100;
-        const logoDrawSize = foW * logoPct * scaleFactor;
-        const qrCenterX = (foX + foW / 2) * scaleFactor;
-        const qrCenterY = (foY + foH / 2) * scaleFactor;
-        const x = qrCenterX - logoDrawSize / 2;
-        const y = qrCenterY - logoDrawSize / 2;
+      const logoPct = (currentLogoSize || 22) / 100;
+      const logoDrawSize = foW * logoPct * scaleFactor;
+      const qrCenterX = (foX + foW / 2) * scaleFactor;
+      const qrCenterY = (foY + foH / 2) * scaleFactor;
 
-        const padding = logoDrawSize * 0.05;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(x - padding, y - padding, logoDrawSize + padding * 2, logoDrawSize + padding * 2);
-        ctx.drawImage(logoImg, x, y, logoDrawSize, logoDrawSize);
-        finalize();
-      };
-      logoImg.onerror = () => finalize();
-      logoImg.src = currentLogoSrc;
-    } else {
-      finalize();
+      await drawLogoOnCanvas(ctx, currentLogoSrc, qrCenterX, qrCenterY, logoDrawSize);
     }
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    }, 'image/png');
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    onError?.('Fehler beim Export');
   };
   img.src = url;
 }
@@ -776,11 +791,57 @@ function handleDownloadFrameSVG(
 ) {
   const container = ref.current;
   if (!container) return;
-  const svgElement = container.querySelector(':scope > svg') as SVGSVGElement | null;
-  const targetSvg = svgElement || container.querySelector('svg');
-  if (!targetSvg) return;
+  const allSvgs = container.querySelectorAll('svg');
+  const outerSvg = container.querySelector(':scope > svg') as SVGSVGElement | null || (allSvgs.length > 0 ? allSvgs[0] : null);
+  if (!outerSvg) return;
 
-  const clonedSvg = targetSvg.cloneNode(true) as SVGSVGElement;
+  // Find the inner QR code SVG (generated by QRCodeSVG, inside foreignObject)
+  const innerQrSvg = allSvgs.length > 1 ? allSvgs[allSvgs.length - 1] : null;
+
+  const clonedSvg = outerSvg.cloneNode(true) as SVGSVGElement;
+
+  // Replace foreignObject elements with embedded (nested) SVG so Illustrator/Inkscape can read it
+  const foreignObjects = clonedSvg.querySelectorAll('foreignObject');
+  foreignObjects.forEach(fo => {
+    if (innerQrSvg) {
+      const foX = parseFloat(fo.getAttribute('x') || '0');
+      const foY = parseFloat(fo.getAttribute('y') || '0');
+      const foW = parseFloat(fo.getAttribute('width') || '256');
+      const foH = parseFloat(fo.getAttribute('height') || '256');
+
+      const qrClone = innerQrSvg.cloneNode(true) as SVGSVGElement;
+      // Ensure any <image> logo elements have href (not only xlink:href) for vector editors
+      const qrImages = qrClone.querySelectorAll('image');
+      qrImages.forEach(imgEl => {
+        const xlinkHref = imgEl.getAttribute('xlink:href') || imgEl.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+        if (xlinkHref && !imgEl.getAttribute('href')) {
+          imgEl.setAttribute('href', xlinkHref);
+        }
+      });
+
+      const nestedSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      nestedSvg.setAttribute('x', String(foX));
+      nestedSvg.setAttribute('y', String(foY));
+      nestedSvg.setAttribute('width', String(foW));
+      nestedSvg.setAttribute('height', String(foH));
+      const vb = qrClone.getAttribute('viewBox') || `0 0 ${foW} ${foH}`;
+      nestedSvg.setAttribute('viewBox', vb);
+
+      while (qrClone.firstChild) {
+        nestedSvg.appendChild(qrClone.firstChild);
+      }
+
+      const clipPath = fo.getAttribute('clip-path');
+      if (clipPath) {
+        nestedSvg.setAttribute('clip-path', clipPath);
+      }
+
+      fo.parentNode?.replaceChild(nestedSvg, fo);
+    } else {
+      fo.remove();
+    }
+  });
+
   const svgData = new XMLSerializer().serializeToString(clonedSvg);
   const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -792,6 +853,18 @@ function handleDownloadFrameSVG(
 }
 
 // ─── Color Picker Modal ─────────────────────────────────────────────────────
+
+// Themed color palettes (module-level; translation key is resolved inside the
+// component so the constant itself can stay pure).
+const PALETTE_DEFS: { nameKey: keyof import('./i18n').Translations; colors: string[] }[] = [
+  { nameKey: 'palKlassisch', colors: ['#000000', '#333333', '#555555', '#777777', '#999999'] },
+  { nameKey: 'palRotWarm', colors: ['#dc2626', '#ef4444', '#f97316', '#ea580c', '#b91c1c', '#9a3412'] },
+  { nameKey: 'palBlauCool', colors: ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#0369a1', '#1e40af'] },
+  { nameKey: 'palGruenNatur', colors: ['#16a34a', '#15803d', '#166534', '#4ade80', '#059669', '#047857'] },
+  { nameKey: 'palLilaKreativ', colors: ['#7c3aed', '#8b5cf6', '#a855f7', '#6d28d9', '#9333ea', '#c026d3'] },
+  { nameKey: 'palDunkelElegant', colors: ['#0f172a', '#1e293b', '#1a1a2e', '#16213e', '#0f3460', '#264653'] },
+  { nameKey: 'palBusiness', colors: ['#1e3a5f', '#2c5282', '#2b6cb0', '#0d47a1', '#283593', '#1565c0'] },
+];
 
 function ColorPickerModal({ color, onChange, onClose, t }: { color: string; onChange: (c: string) => void; onClose: () => void; t: import('./i18n').Translations }) {
   const [tempColor, setTempColor] = useState(color);
@@ -817,6 +890,9 @@ function ColorPickerModal({ color, onChange, onClose, t }: { color: string; onCh
     setHue(Math.round(h * 360));
     setSaturation(Math.round(s * 100));
     setLightness(Math.round(l * 100));
+    // Intentionally run only once on mount with the initial color prop;
+    // subsequent tempColor updates are handled by recalcHSL().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // HSL to Hex conversion
@@ -858,16 +934,9 @@ function ColorPickerModal({ color, onChange, onClose, t }: { color: string; onCh
     setLightness(Math.round(l * 100));
   };
 
-  // Themed color palettes
-  const PALETTES = [
-    { name: t.palKlassisch, colors: ['#000000', '#333333', '#555555', '#777777', '#999999'] },
-    { name: t.palRotWarm, colors: ['#dc2626', '#ef4444', '#f97316', '#ea580c', '#b91c1c', '#9a3412'] },
-    { name: t.palBlauCool, colors: ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#0369a1', '#1e40af'] },
-    { name: t.palGruenNatur, colors: ['#16a34a', '#15803d', '#166534', '#4ade80', '#059669', '#047857'] },
-    { name: t.palLilaKreativ, colors: ['#7c3aed', '#8b5cf6', '#a855f7', '#6d28d9', '#9333ea', '#c026d3'] },
-    { name: t.palDunkelElegant, colors: ['#0f172a', '#1e293b', '#1a1a2e', '#16213e', '#0f3460', '#264653'] },
-    { name: t.palBusiness, colors: ['#1e3a5f', '#2c5282', '#2b6cb0', '#0d47a1', '#283593', '#1565c0'] },
-  ];
+  // Themed color palettes: pull static color codes from module-level PALETTE_DEFS,
+  // resolve translated names at render time via the current `t` object.
+  const PALETTES = PALETTE_DEFS.map(p => ({ name: t[p.nameKey] as string, colors: p.colors }));
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -875,7 +944,7 @@ function ColorPickerModal({ color, onChange, onClose, t }: { color: string; onCh
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900 text-lg">{t.farbeWaehlen}</h3>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+          <button onClick={onClose} aria-label="Schließen" className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
@@ -1040,7 +1109,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
       <div className="flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl">
         <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
         <span className="text-sm font-medium">{message}</span>
-        <button onClick={onClose} className="ml-2 text-gray-400 hover:text-white cursor-pointer">
+        <button onClick={onClose} aria-label="Schließen" className="ml-2 text-gray-400 hover:text-white cursor-pointer">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -1056,14 +1125,26 @@ function handleDownloadPNG(
   sizeCm: number,
   dpi: number,
   currentLogoSrc?: string | null,
-  currentLogoSize?: number
+  currentLogoSize?: number,
+  onError?: (msg: string) => void
 ) {
   const container = ref.current;
   if (!container) return;
   const svgs = container.querySelectorAll('svg');
   const svgElement = svgs.length > 1 ? svgs[svgs.length - 1] : svgs[0];
   if (!svgElement) return;
-  const printPx = Math.round(sizeCm * dpi / 2.54);
+
+  // Minimum pixel safeguard: at least `modules * 4` pixels per side
+  const basePx = Math.round(sizeCm * dpi / 2.54);
+  const viewBox = svgElement.getAttribute('viewBox');
+  let modules = 33;
+  if (viewBox) {
+    const parts = viewBox.split(/\s+/);
+    if (parts.length >= 4) modules = parseInt(parts[2]) || 33;
+  }
+  const minPx = modules * 4;
+  const printPx = Math.max(basePx, minPx);
+
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
   clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clonedSvg.setAttribute('width', String(printPx));
@@ -1074,53 +1155,43 @@ function handleDownloadPNG(
   images.forEach(img => img.remove());
 
   const svgData = new XMLSerializer().serializeToString(clonedSvg);
-  const encodedData = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
   const img = new Image();
-  img.onload = () => {
+  img.onload = async () => {
     const canvas = document.createElement('canvas');
     canvas.width = printPx;
     canvas.height = printPx;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) { URL.revokeObjectURL(url); return; }
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, printPx, printPx);
     ctx.drawImage(img, 0, 0, printPx, printPx);
 
-    const finalize = () => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const downloadUrl = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.download = filename;
-          link.click();
-          URL.revokeObjectURL(downloadUrl);
-        }
-      }, 'image/png');
-    };
-
     // Draw logo on top if present
     if (currentLogoSrc) {
-      const logoImg = new Image();
-      logoImg.onload = () => {
-        const logoPct = (currentLogoSize || 22) / 100;
-        const logoDrawSize = printPx * logoPct;
-        const x = (printPx - logoDrawSize) / 2;
-        const y = (printPx - logoDrawSize) / 2;
-        // White background behind logo
-        const padding = logoDrawSize * 0.05;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(x - padding, y - padding, logoDrawSize + padding * 2, logoDrawSize + padding * 2);
-        ctx.drawImage(logoImg, x, y, logoDrawSize, logoDrawSize);
-        finalize();
-      };
-      logoImg.onerror = () => finalize();
-      logoImg.src = currentLogoSrc;
-    } else {
-      finalize();
+      const logoPct = (currentLogoSize || 22) / 100;
+      const logoDrawSize = printPx * logoPct;
+      await drawLogoOnCanvas(ctx, currentLogoSrc, printPx / 2, printPx / 2, logoDrawSize);
     }
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    }, 'image/png');
+    URL.revokeObjectURL(url);
   };
-  img.src = encodedData;
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    onError?.('Fehler beim Export');
+  };
+  img.src = url;
 }
 
 function handleDownloadSVG(
@@ -1129,13 +1200,27 @@ function handleDownloadSVG(
   sizeCm: number,
   dpi: number
 ) {
-  const svgElement = ref.current?.querySelector('svg');
+  const container = ref.current;
+  if (!container) return;
+  const svgs = container.querySelectorAll('svg');
+  const svgElement = svgs.length > 1 ? svgs[svgs.length - 1] : svgs[0];
   if (!svgElement) return;
-  const printPx = Math.round(sizeCm * dpi / 2.54);
+
+  // Minimum pixel safeguard: at least `modules * 4` pixels per side
+  const basePx = Math.round(sizeCm * dpi / 2.54);
+  const origViewBox = svgElement.getAttribute('viewBox');
+  let modules = 33;
+  if (origViewBox) {
+    const parts = origViewBox.split(/\s+/);
+    if (parts.length >= 4) modules = parseInt(parts[2]) || 33;
+  }
+  const minPx = modules * 4;
+  const printPx = Math.max(basePx, minPx);
+
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
   clonedSvg.setAttribute('width', `${sizeCm}cm`);
   clonedSvg.setAttribute('height', `${sizeCm}cm`);
-  clonedSvg.setAttribute('viewBox', svgElement.getAttribute('viewBox') || `0 0 ${printPx} ${printPx}`);
+  clonedSvg.setAttribute('viewBox', origViewBox || `0 0 ${printPx} ${printPx}`);
   const svgData = new XMLSerializer().serializeToString(clonedSvg);
   const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -1151,9 +1236,19 @@ async function handleDownloadEPS(
   filename: string,
   sizeCm: number,
   fgColor: string,
-  logoSrc?: string | null
+  logoSrc?: string | null,
+  isFrameMode?: boolean
 ) {
-  const svgElement = ref.current?.querySelector('svg');
+  const container = ref.current;
+  if (!container) return;
+  let svgElement: SVGSVGElement | null;
+  if (isFrameMode) {
+    // In frame mode the outer SVG is the frame decoration; we need the INNER QR SVG
+    const svgs = container.querySelectorAll('svg');
+    svgElement = svgs.length > 1 ? (svgs[svgs.length - 1] as SVGSVGElement) : (svgs[0] as SVGSVGElement | null);
+  } else {
+    svgElement = container.querySelector('svg');
+  }
   if (!svgElement) return;
 
   const sizePt = sizeCm * 28.3465;
@@ -1310,7 +1405,8 @@ function handleDownloadJPEG(
   sizeCm: number,
   dpi: number,
   currentLogoSrc?: string | null,
-  currentLogoSize?: number
+  currentLogoSize?: number,
+  onError?: (msg: string) => void
 ) {
   const container = ref.current;
   if (!container) return;
@@ -1338,52 +1434,156 @@ function handleDownloadJPEG(
   clonedSvg.setAttribute('width', String(printPx));
   clonedSvg.setAttribute('height', String(printPx));
   const svgData = new XMLSerializer().serializeToString(clonedSvg);
-  const encodedData = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
   const img = new Image();
-  img.onload = () => {
+  img.onload = async () => {
     const canvas = document.createElement('canvas');
     canvas.width = totalPx;
     canvas.height = totalPx;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) { URL.revokeObjectURL(url); return; }
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, totalPx, totalPx);
     ctx.drawImage(img, margin, margin, printPx, printPx);
 
-    const finalize = () => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const downloadUrl = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.download = filename;
-          link.click();
-          URL.revokeObjectURL(downloadUrl);
-        }
-      }, 'image/jpeg', 1.0);
-    };
-
     // Draw logo on top if present
     if (currentLogoSrc) {
-      const logoImg = new Image();
-      logoImg.onload = () => {
-        const logoPct = (currentLogoSize || 22) / 100;
-        const logoDrawSize = printPx * logoPct;
-        const x = margin + (printPx - logoDrawSize) / 2;
-        const y = margin + (printPx - logoDrawSize) / 2;
-        const padding = logoDrawSize * 0.05;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(x - padding, y - padding, logoDrawSize + padding * 2, logoDrawSize + padding * 2);
-        ctx.drawImage(logoImg, x, y, logoDrawSize, logoDrawSize);
-        finalize();
-      };
-      logoImg.onerror = () => finalize();
-      logoImg.src = currentLogoSrc;
-    } else {
-      finalize();
+      const logoPct = (currentLogoSize || 22) / 100;
+      const logoDrawSize = printPx * logoPct;
+      const centerX = margin + printPx / 2;
+      const centerY = margin + printPx / 2;
+      await drawLogoOnCanvas(ctx, currentLogoSrc, centerX, centerY, logoDrawSize);
     }
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    }, 'image/jpeg', 1.0);
+    URL.revokeObjectURL(url);
   };
-  img.src = encodedData;
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    onError?.('Fehler beim Export');
+  };
+  img.src = url;
+}
+
+function handleDownloadFrameJPEG(
+  ref: React.RefObject<HTMLDivElement | null>,
+  filename: string,
+  scaleFactor: number,
+  currentLogoSrc?: string | null,
+  currentLogoSize?: number,
+  onError?: (msg: string) => void
+) {
+  const container = ref.current;
+  if (!container) return;
+
+  const allSvgs = container.querySelectorAll('svg');
+  const outerSvg = container.querySelector(':scope > svg') as SVGSVGElement | null || (allSvgs.length > 0 ? allSvgs[0] : null);
+  if (!outerSvg) return;
+
+  const innerQrSvg = allSvgs.length > 1 ? allSvgs[allSvgs.length - 1] : null;
+
+  const clonedSvg = outerSvg.cloneNode(true) as SVGSVGElement;
+  const origW = parseFloat(outerSvg.getAttribute('width') || '300');
+  const origH = parseFloat(outerSvg.getAttribute('height') || '300');
+  const pw = Math.round(origW * scaleFactor);
+  const ph = Math.round(origH * scaleFactor);
+  clonedSvg.setAttribute('width', String(pw));
+  clonedSvg.setAttribute('height', String(ph));
+
+  // Replace foreignObject elements with embedded SVG content
+  const foreignObjects = clonedSvg.querySelectorAll('foreignObject');
+  foreignObjects.forEach(fo => {
+    if (innerQrSvg) {
+      const foX = parseFloat(fo.getAttribute('x') || '0');
+      const foY = parseFloat(fo.getAttribute('y') || '0');
+      const foW = parseFloat(fo.getAttribute('width') || '256');
+      const foH = parseFloat(fo.getAttribute('height') || '256');
+
+      const qrClone = innerQrSvg.cloneNode(true) as SVGSVGElement;
+      const qrImages = qrClone.querySelectorAll('image');
+      qrImages.forEach(imgEl => imgEl.remove());
+
+      const nestedSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      nestedSvg.setAttribute('x', String(foX));
+      nestedSvg.setAttribute('y', String(foY));
+      nestedSvg.setAttribute('width', String(foW));
+      nestedSvg.setAttribute('height', String(foH));
+      const vb = qrClone.getAttribute('viewBox') || `0 0 ${foW} ${foH}`;
+      nestedSvg.setAttribute('viewBox', vb);
+
+      while (qrClone.firstChild) {
+        nestedSvg.appendChild(qrClone.firstChild);
+      }
+
+      const clipPath = fo.getAttribute('clip-path');
+      if (clipPath) {
+        nestedSvg.setAttribute('clip-path', clipPath);
+      }
+
+      fo.parentNode?.replaceChild(nestedSvg, fo);
+    } else {
+      fo.remove();
+    }
+  });
+
+  const svgData = new XMLSerializer().serializeToString(clonedSvg);
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = async () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = pw;
+    canvas.height = ph;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { URL.revokeObjectURL(url); return; }
+    // JPEG has no transparency - fill with white background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, pw, ph);
+    ctx.drawImage(img, 0, 0, pw, ph);
+
+    // Draw logo on top if present - position over QR area
+    if (currentLogoSrc && innerQrSvg) {
+      const foEl = outerSvg.querySelector('foreignObject');
+      const foX = foEl ? parseFloat(foEl.getAttribute('x') || '0') : 0;
+      const foY = foEl ? parseFloat(foEl.getAttribute('y') || '0') : 0;
+      const foW = foEl ? parseFloat(foEl.getAttribute('width') || '256') : 256;
+      const foH = foEl ? parseFloat(foEl.getAttribute('height') || '256') : 256;
+
+      const logoPct = (currentLogoSize || 22) / 100;
+      const logoDrawSize = foW * logoPct * scaleFactor;
+      const qrCenterX = (foX + foW / 2) * scaleFactor;
+      const qrCenterY = (foY + foH / 2) * scaleFactor;
+
+      await drawLogoOnCanvas(ctx, currentLogoSrc, qrCenterX, qrCenterY, logoDrawSize);
+    }
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    }, 'image/jpeg', 1.0);
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    onError?.('Fehler beim Export');
+  };
+  img.src = url;
 }
 
 // ─── vCard Helpers ───────────────────────────────────────────────────────────
@@ -1478,7 +1678,7 @@ function toWin1252Bytes(str: string): Uint8Array {
 
 // ─── Language Selector Component ─────────────────────────────────────────────
 
-const CAROUSEL_BENEFITS: Record<string, string[]> = {
+const CAROUSEL_BENEFITS: Partial<Record<TabType, string[]>> = {
   'visitenkarte': ['Kontakt direkt ins Adressbuch importieren', 'Kein Abtippen von Telefonnummern mehr', 'Perfekt für Messen und Networking'],
   'link': ['Jede URL als QR-Code', 'Ideal für Flyer, Plakate und Verpackungen', 'Kunden gelangen sofort auf Ihre Website'],
   'google-review': ['Kunden bewerten Sie direkt auf Google', 'Mehr Sterne = mehr Neukunden', 'Perfekt für Restaurants und Geschäfte'],
@@ -1528,6 +1728,7 @@ function FeatureCarousel({ cards, onSelect }: { cards: { id: TabType; title: str
           {/* Left arrow */}
           <button
             onClick={() => switchTo((current - 1 + cards.length) % cards.length)}
+            aria-label="Vorheriger"
             className="text-gray-500 hover:text-white transition-colors cursor-pointer flex-shrink-0 p-2 hover:bg-gray-800 rounded-full"
           >
             <ChevronDown className="w-6 h-6 rotate-90" />
@@ -1565,6 +1766,7 @@ function FeatureCarousel({ cards, onSelect }: { cards: { id: TabType; title: str
           {/* Right arrow */}
           <button
             onClick={() => switchTo((current + 1) % cards.length)}
+            aria-label="Nächster"
             className="text-gray-500 hover:text-white transition-colors cursor-pointer flex-shrink-0 p-2 hover:bg-gray-800 rounded-full"
           >
             <ChevronDown className="w-6 h-6 -rotate-90" />
@@ -1577,6 +1779,7 @@ function FeatureCarousel({ cards, onSelect }: { cards: { id: TabType; title: str
             <button
               key={i}
               onClick={() => switchTo(i)}
+              aria-label={`Slide ${i + 1}`}
               className={`h-2 rounded-full transition-all cursor-pointer ${i === current ? 'bg-red-500 w-8' : 'bg-gray-600 hover:bg-gray-500 w-2'}`}
             />
           ))}
@@ -1669,6 +1872,7 @@ export default function App() {
   const [showImpressum, setShowImpressum] = useState(false);
   const [showDatenschutz, setShowDatenschutz] = useState(false);
   const [showDonate, setShowDonate] = useState(false);
+  const [donateAmount, setDonateAmount] = useState<string>('');
 
   const isBarcode = BARCODE_TABS.includes(activeTab as typeof BARCODE_TABS[number]);
 
@@ -1684,6 +1888,9 @@ export default function App() {
       // Unknown path → redirect to landing
       navigate('/', { replace: true });
     }
+    // `navigate` from react-router is stable across renders and does not need
+    // to be tracked in this dependency list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const openTab = (tab: TabType) => {
@@ -2776,6 +2983,10 @@ export default function App() {
             </div>
           </div>
         );
+      default: {
+        const _exhaustive: never = activeTab;
+        return _exhaustive;
+      }
     }
   }
 
@@ -2802,6 +3013,10 @@ export default function App() {
       case 'code128': return `code128-barcode`;
       case 'code39': return `code39-barcode`;
       case 'itf14': return `itf14-barcode`;
+      default: {
+        const _exhaustive: never = activeTab;
+        return _exhaustive;
+      }
     }
   };
 
@@ -2872,6 +3087,10 @@ export default function App() {
         document.title = `${card.title} ${suffix} — Kostenlos | qrcode-no-abo.de`;
       }
     }
+    // FEATURE_CARDS is rebuilt on every render (contains JSX icons bound to `t`);
+    // tracking it as a dep would cause an infinite effect loop. `lang` already
+    // covers the translation-change case that matters for the title.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showGenerator, activeTab, lang]);
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -3049,6 +3268,8 @@ export default function App() {
                       onClick={() => {
                         if (!barcodeRef.current) return;
                         const svgData = new XMLSerializer().serializeToString(barcodeRef.current);
+                        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                        const url = URL.createObjectURL(svgBlob);
                         const canvas = document.createElement('canvas');
                         const img = new Image();
                         img.onload = () => {
@@ -3062,8 +3283,13 @@ export default function App() {
                           a.download = `${activeTab}-barcode.png`;
                           a.href = canvas.toDataURL('image/png');
                           a.click();
+                          URL.revokeObjectURL(url);
                         };
-                        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                        img.onerror = () => {
+                          URL.revokeObjectURL(url);
+                          showToast('Fehler beim Export');
+                        };
+                        img.src = url;
                         incrementCounter();
                       }}
                       disabled={!barcodeInput}
@@ -3239,6 +3465,7 @@ export default function App() {
                               <span className="text-xs text-red-700 flex-1 font-medium">{t.logoAktiv}</span>
                               <button
                                 onClick={() => { setCustomLogo(null); setUseLogo(false); }}
+                                aria-label="Logo entfernen"
                                 className="p-1 text-red-500 hover:bg-red-100 rounded cursor-pointer"
                               >
                                 <X className="w-3.5 h-3.5" />
@@ -3285,7 +3512,7 @@ export default function App() {
                       {selectedFrame === 'none' ? (
                         <div className="space-y-2">
                           <button
-                            onClick={() => { incrementCounter(); handleDownloadPNG(qrRef, `${getPrefix()}-${qrSizeCm}cm-${qrDpi}dpi.png`, qrSizeCm, qrDpi, logoSrc, logoSize); }}
+                            onClick={() => { incrementCounter(); handleDownloadPNG(qrRef, `${getPrefix()}-${qrSizeCm}cm-${qrDpi}dpi.png`, qrSizeCm, qrDpi, logoSrc, logoSize, showToast); }}
                             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer font-medium"
                           >
                             <Download className="w-4 h-4" />
@@ -3306,7 +3533,7 @@ export default function App() {
                             {t.epsDownload}
                           </button>
                           <button
-                            onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${getPrefix()}-${qrSizeCm}cm-${qrDpi}dpi.jpg`, qrSizeCm, qrDpi, logoSrc, logoSize); }}
+                            onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${getPrefix()}-${qrSizeCm}cm-${qrDpi}dpi.jpg`, qrSizeCm, qrDpi, logoSrc, logoSize, showToast); }}
                             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors cursor-pointer font-medium"
                           >
                             <Download className="w-4 h-4" />
@@ -3316,7 +3543,7 @@ export default function App() {
                       ) : (
                         <div className="space-y-2">
                           <button
-                            onClick={() => { incrementCounter(); handleDownloadFramePNG(qrRef, `${getPrefix()}-${selectedFrame}.png`, Math.round(qrSizeCm * qrDpi / 2.54) / previewPx, logoSrc, logoSize); }}
+                            onClick={() => { incrementCounter(); handleDownloadFramePNG(qrRef, `${getPrefix()}-${selectedFrame}.png`, Math.round(qrSizeCm * qrDpi / 2.54) / previewPx, logoSrc, logoSize, showToast); }}
                             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer font-medium"
                           >
                             <Download className="w-4 h-4" />
@@ -3330,14 +3557,14 @@ export default function App() {
                             {t.svgMitRahmen}
                           </button>
                           <button
-                            onClick={() => { incrementCounter(); handleDownloadEPS(qrRef, `${getPrefix()}-${selectedFrame}.eps`, qrSizeCm, qrColor, logoSrc); }}
+                            onClick={() => { incrementCounter(); handleDownloadEPS(qrRef, `${getPrefix()}-${selectedFrame}.eps`, qrSizeCm, qrColor, logoSrc, true); }}
                             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer font-medium"
                           >
                             <Download className="w-4 h-4" />
                             {t.epsDownload}
                           </button>
                           <button
-                            onClick={() => { incrementCounter(); handleDownloadJPEG(qrRef, `${getPrefix()}-${selectedFrame}-${qrSizeCm}cm-${qrDpi}dpi.jpg`, qrSizeCm, qrDpi, logoSrc, logoSize); }}
+                            onClick={() => { incrementCounter(); handleDownloadFrameJPEG(qrRef, `${getPrefix()}-${selectedFrame}-${qrSizeCm}cm-${qrDpi}dpi.jpg`, Math.round(qrSizeCm * qrDpi / 2.54) / previewPx, logoSrc, logoSize, showToast); }}
                             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors cursor-pointer font-medium"
                           >
                             <Download className="w-4 h-4" />
@@ -3598,7 +3825,7 @@ export default function App() {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 sm:p-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Impressum</h2>
-              <button onClick={() => setShowImpressum(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+              <button onClick={() => setShowImpressum(false)} aria-label="Schließen" className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -3625,7 +3852,7 @@ export default function App() {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 sm:p-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Datenschutzerklärung</h2>
-              <button onClick={() => setShowDatenschutz(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+              <button onClick={() => setShowDatenschutz(false)} aria-label="Schließen" className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -3703,17 +3930,16 @@ export default function App() {
                     min="1"
                     step="0.5"
                     placeholder="Freier Betrag"
-                    id="donate-amount"
+                    value={donateAmount}
+                    onChange={(e) => setDonateAmount(e.target.value)}
                     className="w-full px-3 py-2.5 pr-8 border-2 border-amber-200 rounded-xl text-amber-900 font-bold text-center focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold">€</span>
                 </div>
                 <button
                   onClick={() => {
-                    const input = document.getElementById('donate-amount') as HTMLInputElement;
-                    const val = input?.value;
-                    if (val && parseFloat(val) > 0) {
-                      window.open(`https://paypal.me/Erguellue/${val}`, '_blank');
+                    if (donateAmount && parseFloat(donateAmount) > 0) {
+                      window.open(`https://paypal.me/Erguellue/${donateAmount}`, '_blank');
                     }
                   }}
                   className="flex items-center justify-center px-5 py-2.5 bg-amber-500 hover:bg-amber-600 rounded-xl text-white font-bold text-sm transition-all cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"

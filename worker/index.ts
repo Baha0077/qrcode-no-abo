@@ -454,6 +454,65 @@ export default {
       return new Response(JSON.stringify({ count: parseInt(count, 10) }), { headers });
     }
 
+    // Abuse protection for counter increment endpoints
+    // Applied to POST /api/counter and POST /api/visitor
+    const isIncrementEndpoint =
+      (url.pathname === '/api/counter' || url.pathname === '/api/visitor') &&
+      request.method === 'POST';
+
+    if (isIncrementEndpoint) {
+      // 1) Bot filter: swallow silently (return 200 OK, no increment)
+      const counterUA = request.headers.get('user-agent') || '';
+      if (isBot(counterUA)) {
+        return new Response(JSON.stringify({ count: 0, skipped: 'bot' }), { headers });
+      }
+
+      // 2) Referer check: only allow requests originating from qrcode-no-abo.de
+      const referer = request.headers.get('referer') || '';
+      if (!referer.includes('qrcode-no-abo.de')) {
+        return new Response(
+          JSON.stringify({ error: 'forbidden', reason: 'invalid_referer' }),
+          { status: 403, headers }
+        );
+      }
+
+      // 3) IP-based rate limit via KV (100/day per IP, per endpoint).
+      // COUNTER KV is already set up, so reuse it with a dedicated key prefix.
+      try {
+        const clientIp =
+          request.headers.get('cf-connecting-ip') ||
+          request.headers.get('x-forwarded-for') ||
+          'unknown';
+        // Hash IP so we do not store raw addresses in KV
+        const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const hashInput = `${clientIp}|${date}|${url.pathname}`;
+        const hashBuf = await crypto.subtle.digest(
+          'SHA-256',
+          new TextEncoder().encode(hashInput)
+        );
+        const hashHex = Array.from(new Uint8Array(hashBuf))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('')
+          .slice(0, 32);
+        const rlKey = `rl:${hashHex}`;
+        const currentCountStr = await env.COUNTER.get(rlKey);
+        const currentCount = parseInt(currentCountStr || '0', 10);
+        if (currentCount >= 100) {
+          return new Response(
+            JSON.stringify({ error: 'rate_limited', reason: 'daily_limit' }),
+            { status: 429, headers }
+          );
+        }
+        // Fire-and-forget increment with 1-day TTL
+        await env.COUNTER.put(rlKey, String(currentCount + 1), {
+          expirationTtl: 86400,
+        });
+      } catch {
+        // If KV is unavailable for rate-limit tracking, fall through
+        // to still honour the Referer + bot checks already performed above.
+      }
+    }
+
     // Counter API: POST /api/counter - increment QR count
     if (url.pathname === '/api/counter' && request.method === 'POST') {
       const current = parseInt(await env.COUNTER.get('total') || '0', 10);
