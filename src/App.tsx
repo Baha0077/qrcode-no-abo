@@ -2887,6 +2887,25 @@ export default function App() {
       {/* Toast */}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
+      {/* Top Bar (Landing Page) - Sprachauswahl + Counter */}
+      {!showGenerator && (
+        <div className="bg-gray-900 border-b border-gray-800">
+          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <QrCode className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <span className="text-white font-bold text-sm sm:text-base truncate">qrcode-no-abo.de</span>
+              {globalCounter > 0 && (
+                <span className="hidden sm:inline text-gray-400 text-xs ml-2 truncate">
+                  <span className="font-mono font-bold text-white">{globalCounter.toLocaleString('de-DE')}</span>
+                  {' '}{t.kostenlosErstellteQR}
+                </span>
+              )}
+            </div>
+            <LanguageSelector lang={lang} setLang={setLang} />
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className={`bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white relative ${!showGenerator ? 'hidden' : ''}`}>
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 sm:py-5">
