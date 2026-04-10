@@ -2935,11 +2935,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Beta Banner */}
-      <div className="bg-amber-500 text-amber-950 text-center py-1.5 px-4 text-xs sm:text-sm font-medium">
-        🚧 Beta-Version — Fehler gefunden? Bitte melden an <a href="mailto:info@qrcode-no-abo.de" className="underline font-bold">info@qrcode-no-abo.de</a>
-      </div>
-
       {/* Feature Carousel Banner */}
       {!showGenerator && (
         <FeatureCarousel cards={FEATURE_CARDS} onSelect={openTab} />
